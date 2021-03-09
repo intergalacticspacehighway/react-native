@@ -49,6 +49,7 @@ type Props = $ReadOnly<{|
   onValueChange?: ?(itemValue: string | number, itemIndex: number) => mixed,
   selectedValue: ?string,
   accessibilityLabel?: ?string,
+  accessibilityHint?: ?string,
 |}>;
 
 type State = {|
@@ -113,6 +114,7 @@ class PickerIOS extends React.Component<Props, State> {
           selectedIndex={this.state.selectedIndex}
           onChange={this._onChange}
           accessibilityLabel={this.props.accessibilityLabel}
+          accessibilityHint={this.props.accessibilityHint}
         />
       </View>
     );

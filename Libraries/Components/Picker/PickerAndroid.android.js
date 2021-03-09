@@ -32,6 +32,7 @@ type PickerItemValue = number | string;
 
 type Props = $ReadOnly<{|
   accessibilityLabel?: ?Stringish,
+  accessibilityHint?: ?Stringish,
   children?: React.Node,
   style?: ?TextStyleProp,
   backgroundColor?: ?ColorValue,
@@ -112,6 +113,7 @@ function PickerAndroid(props: Props): React.Node {
 
   const rootProps = {
     accessibilityLabel: props.accessibilityLabel,
+    accessibilityHint: props.accessibilityHint,
     enabled: props.enabled,
     items,
     onSelect,

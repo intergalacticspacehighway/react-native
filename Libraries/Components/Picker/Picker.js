@@ -116,6 +116,16 @@ type PickerProps = $ReadOnly<{|
    * The string used for the accessibility label. Will be read once focused on the picker but not on change.
    */
   accessibilityLabel?: ?string,
+
+  /**
+   * An accessibility hint helps users understand what will happen when they perform
+   * an action on the accessibility element when that result is not obvious from the
+   * accessibility label.
+   *
+   *
+   * See https://reactnative.dev/docs/view.html#accessibilityHint
+   */
+  accessibilityHint?: ?string,
 |}>;
 
 /**

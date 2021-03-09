@@ -124,6 +124,16 @@ type ButtonProps = $ReadOnly<{|
   accessibilityLabel?: ?string,
 
   /**
+   * An accessibility hint helps users understand what will happen when they perform
+   * an action on the accessibility element when that result is not obvious from the
+   * accessibility label.
+   *
+   *
+   * See https://reactnative.dev/docs/view.html#accessibilityHint
+   */
+  accessibilityHint?: ?Stringish,
+
+  /**
     If `true`, disable all interactions for this component.
 
     @default false
@@ -251,6 +261,7 @@ class Button extends React.Component<ButtonProps> {
   render(): React.Node {
     const {
       accessibilityLabel,
+      accessibilityHint,
       color,
       onPress,
       touchSoundDisabled,
@@ -289,6 +300,7 @@ class Button extends React.Component<ButtonProps> {
       Platform.OS === 'android' ? TouchableNativeFeedback : TouchableOpacity;
     return (
       <Touchable
+        accessibilityHint={accessibilityHint}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
         accessibilityState={accessibilityState}
