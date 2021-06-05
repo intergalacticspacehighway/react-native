@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.SpannableString;
 import android.text.style.URLSpan;
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import androidx.annotation.Nullable;
@@ -207,6 +208,19 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
     }
     final ReadableArray accessibilityActions =
         (ReadableArray) host.getTag(R.id.accessibility_actions);
+    final ReadableMap accessibilityCollectionInfo =
+      (ReadableMap) host.getTag(R.id.accessibility_collection_info);
+
+    if (accessibilityCollectionInfo != null) {
+      int rowCount = accessibilityCollectionInfo.getInt("rowCount");
+      int columnCount = accessibilityCollectionInfo.getInt("columnCount");
+      boolean hierarchical = accessibilityCollectionInfo.getBoolean("hierarchical");
+      Log.d("collectionInfo", "setting");
+
+      AccessibilityNodeInfoCompat.CollectionInfoCompat collectionInfoCompat = AccessibilityNodeInfoCompat.CollectionInfoCompat.obtain(rowCount, columnCount, hierarchical);
+      info.setCollectionInfo(collectionInfoCompat);
+    }
+
     if (accessibilityActions != null) {
       for (int i = 0; i < accessibilityActions.size(); i++) {
         final ReadableMap action = accessibilityActions.getMap(i);

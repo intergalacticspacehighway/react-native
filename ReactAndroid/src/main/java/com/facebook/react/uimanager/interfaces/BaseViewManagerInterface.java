@@ -26,6 +26,8 @@ public interface BaseViewManagerInterface<T extends View> {
   void setAccessibilityLiveRegion(T view, @Nullable String liveRegion);
 
   void setAccessibilityRole(T view, @Nullable String accessibilityRole);
+  
+  public void setAccessibilityCollectionInfo(T view, @Nullable ReadableMap accessibilityCollectionInfo);
 
   void setViewState(T view, @Nullable ReadableMap accessibilityState);
 
