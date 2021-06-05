@@ -125,6 +125,11 @@ const ComponentExamples: Array<RNTesterExample> = [
     module: require('../examples/SectionList/SectionListExample'),
   },
   {
+    key: 'VirtualizedList-Basic',
+    module: require('../examples/VirtualizedList/VirtualizedListExample'),
+    category: 'ListView',
+  },
+  {
     key: 'StatusBarExample',
     category: 'UI',
     module: require('../examples/StatusBar/StatusBarExample'),
