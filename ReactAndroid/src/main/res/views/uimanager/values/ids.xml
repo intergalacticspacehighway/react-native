@@ -18,6 +18,9 @@
   <!--tag is used to store accessibilityCollectionInfo -->
   <item type="id" name="accessibility_collection_info"/>
 
+  <!--tag is used to store accessibilityCollectionItemInfo -->
+  <item type="id" name="accessibility_collection_item_info"/>
+
  <!--tag is used to store accessibilityState -->
   <item type="id" name="accessibility_state"/>
 

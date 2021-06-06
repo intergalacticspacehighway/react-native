@@ -27,7 +27,9 @@ public interface BaseViewManagerInterface<T extends View> {
 
   void setAccessibilityRole(T view, @Nullable String accessibilityRole);
   
-  public void setAccessibilityCollectionInfo(T view, @Nullable ReadableMap accessibilityCollectionInfo);
+  void setAccessibilityCollectionInfo(T view, @Nullable ReadableMap accessibilityCollectionInfo);
+  
+  void setAccessibilityCollectionItemInfo(T view, @Nullable ReadableMap accessibilityCollectionItemInfo);
 
   void setViewState(T view, @Nullable ReadableMap accessibilityState);
 

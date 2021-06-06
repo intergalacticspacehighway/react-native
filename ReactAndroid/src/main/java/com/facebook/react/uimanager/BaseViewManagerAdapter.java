@@ -34,6 +34,9 @@ public abstract class BaseViewManagerAdapter<T extends View>
   public void setAccessibilityCollectionInfo(@NonNull T view, @Nullable ReadableMap accessibilityCollectionInfo) {}
 
   @Override
+  public void setAccessibilityCollectionItemInfo(@NonNull T view, @Nullable ReadableMap accessibilityCollectionItemInfo) {}
+
+  @Override
   public void setViewState(@NonNull T view, @Nullable ReadableMap accessibilityState) {}
 
   @Override

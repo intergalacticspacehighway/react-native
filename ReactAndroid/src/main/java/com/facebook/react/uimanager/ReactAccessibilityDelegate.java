@@ -213,6 +213,7 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
     final ReadableMap accessibilityCollectionInfo =
       (ReadableMap) host.getTag(R.id.accessibility_collection_info);
 
+
     if (accessibilityCollectionInfo != null) {
       int rowCount = accessibilityCollectionInfo.getInt("rowCount");
       int columnCount = accessibilityCollectionInfo.getInt("columnCount");
@@ -221,6 +222,7 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
       AccessibilityNodeInfoCompat.CollectionInfoCompat collectionInfoCompat = AccessibilityNodeInfoCompat.CollectionInfoCompat.obtain(rowCount, columnCount, hierarchical);
       info.setCollectionInfo(collectionInfoCompat);
     }
+
 
     if (accessibilityActions != null) {
       for (int i = 0; i < accessibilityActions.size(); i++) {
@@ -298,6 +300,7 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
     final ReadableMap accessibilityValue = (ReadableMap) host.getTag(R.id.accessibility_value);
     final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
     if (accessibilityCollectionInfo != null) {
+      event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
 
       View contentView = ((ViewGroup) host).getChildAt(0);
 
@@ -309,18 +312,16 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
         boolean isVisible = isViewVisible(host, nextChild);
         if (isVisible == true) {
           if(firstVisible == null) {
-            firstVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_info);
+            firstVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
           }
-          lastVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_info);
+          lastVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
         }
 
-        event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
 
         if (firstVisible != null && lastVisible != null) {
-          event.setFromIndex(firstVisible.getInt("index"));
-          event.setToIndex(lastVisible.getInt("index"));
+          event.setFromIndex(firstVisible.getInt("rowIndex"));
+          event.setToIndex(lastVisible.getInt("rowIndex"));
         }
-
       }
     }
 

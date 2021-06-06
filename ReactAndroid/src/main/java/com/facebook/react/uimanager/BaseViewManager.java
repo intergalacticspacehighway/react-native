@@ -171,6 +171,13 @@ public abstract class BaseViewManager<T extends View, C extends LayoutShadowNode
   }
 
   @Override
+  @ReactProp(name = ViewProps.ACCESSIBILITY_COLLECTION_ITEM_INFO)
+  public void setAccessibilityCollectionItemInfo(@NonNull T view,  @Nullable ReadableMap accessibilityCollectionItemInfo) {
+    Log.d("collectionInfo", accessibilityCollectionItemInfo.toString());
+    view.setTag(R.id.accessibility_collection_item_info, accessibilityCollectionItemInfo);
+  }
+
+  @Override
   @ReactProp(name = ViewProps.ACCESSIBILITY_STATE)
   public void setViewState(@NonNull T view, @Nullable ReadableMap accessibilityState) {
     if (accessibilityState == null) {

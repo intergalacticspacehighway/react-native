@@ -146,6 +146,7 @@ public class ViewProps {
   public static final String RENDER_TO_HARDWARE_TEXTURE = "renderToHardwareTextureAndroid";
   public static final String ACCESSIBILITY_LABEL = "accessibilityLabel";
   public static final String ACCESSIBILITY_COLLECTION_INFO = "accessibilityCollectionInfo";
+  public static final String ACCESSIBILITY_COLLECTION_ITEM_INFO = "accessibilityCollectionItemInfo";
   public static final String ACCESSIBILITY_HINT = "accessibilityHint";
   public static final String ACCESSIBILITY_LIVE_REGION = "accessibilityLiveRegion";
   public static final String ACCESSIBILITY_ROLE = "accessibilityRole";
