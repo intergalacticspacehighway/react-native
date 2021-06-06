@@ -300,7 +300,7 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
     final ReadableMap accessibilityValue = (ReadableMap) host.getTag(R.id.accessibility_value);
     final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
     if (accessibilityCollectionInfo != null) {
-      event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
+      event.setItemCount(accessibilityCollectionInfo.getInt("rowCount"));
 
       View contentView = ((ViewGroup) host).getChildAt(0);
 
