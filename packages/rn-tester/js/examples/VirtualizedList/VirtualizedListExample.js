@@ -2,6 +2,10 @@ import React from 'react';
 import { SafeAreaView, View, VirtualizedList, StyleSheet, Text, StatusBar, Pressable } from 'react-native';
 
 const DATA = [];
+const  viewabilityConfig = {
+  minimumViewTime: 500,
+  viewAreaCoveragePercentThreshold: 60,
+};
 
 const getItem = (data, index) => ({
   id: Math.random().toString(12).substring(0),
@@ -10,18 +14,19 @@ const getItem = (data, index) => ({
 
 const getItemCount = (data) => 50;
 
-const Item = ({ title }) => (
+const Item = ({ title}) => {
+  return (
   <Pressable style={styles.item}>
     <Text style={styles.title}>{title}</Text>
   </Pressable>
-);
+)
+}
 
 const VirtualizedListExample = () => {
   return (
     <SafeAreaView style={styles.container}>
       <VirtualizedList
         data={DATA}
-        initialNumToRender={4}
         renderItem={({ item }) => <Item title={item.title} />}
         keyExtractor={item => item.id}
         getItemCount={getItemCount}
