@@ -1242,7 +1242,6 @@ class VirtualizedList extends React.PureComponent<Props, State> {
         rowCount: this.props.getItemCount(this.props.data),
         columnCount: 1,
         hierarchical: false,
-        itemCount: this.props.getItemCount(this.props.data),
       },
     };
 
@@ -2076,6 +2075,15 @@ class CellRenderer extends React.Component<
       : horizontal
       ? [styles.row, inversionStyle]
       : inversionStyle;
+
+    const accessibilityCollectionItemInfo = {
+      rowIndex: index,
+      rowSpan: 1,
+      columnIndex: 1,
+      columnSpan: 1,
+      heading: false,
+    };
+
     const result = !CellRendererComponent ? (
       /* $FlowFixMe[incompatible-type-arg] (>=0.89.0 site=react_native_fb) *
         This comment suppresses an error found when Flow v0.89 was deployed. *
@@ -2083,9 +2091,7 @@ class CellRenderer extends React.Component<
       <View
         style={cellStyle}
         onLayout={onLayout}
-        accessibilityCollectionInfo={{
-          index,
-        }}>
+        accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
         {element}
         {itemSeparator}
       </View>
@@ -2094,9 +2100,7 @@ class CellRenderer extends React.Component<
         {...this.props}
         style={cellStyle}
         onLayout={onLayout}
-        accessibilityCollectionInfo={{
-          index,
-        }}>
+        accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
         {element}
         {itemSeparator}
       </CellRendererComponent>
