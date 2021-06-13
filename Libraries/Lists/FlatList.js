@@ -493,7 +493,7 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
     }
   };
 
-  _getItemCount = (data: ?Array<ItemT>): number => {
+  _getItemCount = (data: ?$ReadOnlyArray<ItemT>): number => {
     if (data) {
       const {numColumns} = this.props;
       return numColumns > 1 ? Math.ceil(data.length / numColumns) : data.length;
@@ -606,11 +606,29 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
           return (
             <View style={StyleSheet.compose(styles.row, columnWrapperStyle)}>
               {item.map((it, kk) => {
-                const element = renderer({
-                  item: it,
-                  index: index * numColumns + kk,
-                  separators: info.separators,
-                });
+                const accessibilityCollectionItemInfo = {
+                  rowIndex: index,
+                  rowSpan: 1,
+                  columnIndex: (index * numColumns + kk) % numColumns,
+                  columnSpan: 1,
+                  heading: false,
+                };
+
+                const element = (
+                  <View
+                    importantForAccessibility="yes"
+                    style={{flex: 1}}
+                    accessibilityCollectionItemInfo={
+                      accessibilityCollectionItemInfo
+                    }>
+                    {renderer({
+                      item: it,
+                      index: index * numColumns + kk,
+                      separators: info.separators,
+                      accessibilityCollectionItemInfo,
+                    })}
+                  </View>
+                );
                 return element != null ? (
                   <React.Fragment key={kk}>{element}</React.Fragment>
                 ) : null;
@@ -618,10 +636,38 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
             </View>
           );
         } else {
-          return renderer(info);
+          const {index} = info;
+
+          const accessibilityCollectionItemInfo = {
+            rowIndex: index,
+            rowSpan: 1,
+            columnIndex: 0,
+            columnSpan: 1,
+            heading: false,
+          };
+
+          return (
+            <View
+              importantForAccessibility="yes"
+              style={{flex: 1}}
+              accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
+              {renderer(info)}
+            </View>
+          );
         }
       },
     };
+  };
+
+  _getAccessibilityCollectionInfo = () => {
+    const accessibilityCollectionProps = {
+      rowCount: this._getItemCount(this.props.data),
+      columnCount: this.props.numColumns,
+      hierarchical: false,
+      itemCount: this.props.data ? this.props.data.length : 0,
+    };
+
+    return accessibilityCollectionProps;
   };
 
   render(): React.Node {
@@ -633,6 +679,8 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
         getItem={this._getItem}
         getItemCount={this._getItemCount}
         keyExtractor={this._keyExtractor}
+        accessibilityCollectionInfo={this._getAccessibilityCollectionInfo()}
+        accessibilityRole={this.props.numColumns > 1 ? 'grid' : 'list'}
         ref={this._captureRef}
         viewabilityConfigCallbackPairs={this._virtualizedListPairs}
         {...this._renderer()}
