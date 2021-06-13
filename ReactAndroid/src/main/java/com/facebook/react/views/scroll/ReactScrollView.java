@@ -118,6 +118,39 @@ public class ReactScrollView extends ScrollView
   }
 
 
+  private View getContentView() {
+    View contentView = getChildAt(0);
+    return contentView;
+  }
+
+  private void setAccessibilityCollectionEvent(View host, AccessibilityEvent event) {
+    final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
+    if (accessibilityCollectionInfo != null) {
+      event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
+
+      View contentView = getContentView();
+
+      ReadableMap firstVisible = null;
+      ReadableMap lastVisible = null;
+
+      for(int index = 0; index < ((ViewGroup) contentView).getChildCount(); index++) {
+        View nextChild = ((ViewGroup) contentView).getChildAt(index);
+        boolean isVisible = isPartiallyScrolledInView(nextChild);
+
+        if (isVisible == true) {
+          if(firstVisible == null) {
+            firstVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
+          }
+          lastVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
+        }
+
+        if (firstVisible != null && lastVisible != null && firstVisible.hasKey("itemIndex") && lastVisible.hasKey("itemIndex")) {
+          event.setFromIndex(firstVisible.getInt("itemIndex"));
+          event.setToIndex(lastVisible.getInt("itemIndex"));
+        }
+      }
+    }
+  }
 
   public ReactScrollView(ReactContext context, @Nullable FpsListener fpsListener) {
     super(context);
@@ -135,34 +168,7 @@ public class ReactScrollView extends ScrollView
         public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
           super.onInitializeAccessibilityEvent(host, event);
           event.setScrollable(mScrollEnabled);
-
-          final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
-          if (accessibilityCollectionInfo != null) {
-            event.setItemCount(accessibilityCollectionInfo.getInt("rowCount"));
-
-            View contentView = ((ViewGroup) host).getChildAt(0);
-
-            ReadableMap firstVisible = null;
-            ReadableMap lastVisible = null;
-
-            for(int index = 0; index < ((ViewGroup) contentView).getChildCount(); index++) {
-              View nextChild = ((ViewGroup) contentView).getChildAt(index);
-              boolean isVisible = isPartiallyScrolledInView(nextChild);
-
-              if (isVisible == true) {
-                if(firstVisible == null) {
-                  firstVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
-                }
-                lastVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
-              }
-
-
-              if (firstVisible != null && lastVisible != null) {
-                event.setFromIndex(firstVisible.getInt("rowIndex"));
-                event.setToIndex(lastVisible.getInt("rowIndex"));
-              }
-            }
-          }
+          setAccessibilityCollectionEvent(host, event);
         }
 
         @Override

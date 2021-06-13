@@ -612,12 +612,13 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
                   columnIndex: (index * numColumns + kk) % numColumns,
                   columnSpan: 1,
                   heading: false,
+                  itemIndex: index * numColumns + kk,
                 };
 
                 const element = (
                   <View
                     importantForAccessibility="yes"
-                    style={{flex: 1}}
+                    style={styles.cellStyle}
                     accessibilityCollectionItemInfo={
                       accessibilityCollectionItemInfo
                     }>
@@ -644,12 +645,13 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
             columnIndex: 0,
             columnSpan: 1,
             heading: false,
+            itemIndex: index,
           };
 
           return (
             <View
               importantForAccessibility="yes"
-              style={{flex: 1}}
+              style={styles.cellStyle}
               accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
               {renderer(info)}
             </View>
@@ -661,10 +663,10 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
 
   _getAccessibilityCollectionInfo = () => {
     const accessibilityCollectionProps = {
+      itemCount: this.props.data ? this.props.data.length : 0,
       rowCount: this._getItemCount(this.props.data),
       columnCount: this.props.numColumns,
       hierarchical: false,
-      itemCount: this.props.data ? this.props.data.length : 0,
     };
 
     return accessibilityCollectionProps;
@@ -691,6 +693,7 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
 
 const styles = StyleSheet.create({
   row: {flexDirection: 'row'},
+  cellStyle: {flex: 1},
 });
 
 module.exports = FlatList;
