@@ -17,6 +17,9 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.FocusFinder;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -119,14 +122,39 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
     mReactBackgroundManager = new ReactViewBackgroundManager(this);
     mFpsListener = fpsListener;
 
+    final boolean[] allowOnInitializeAccessibilityEvent = {false};
+    Handler mHandler =
+      new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+          View host = (View) msg.obj;
+          allowOnInitializeAccessibilityEvent[0] = true;
+          host.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SCROLLED);
+        }
+      };
+
+    final int SEND_EVENT = 1;
+
+
+
     ViewCompat.setAccessibilityDelegate(
         this,
         new AccessibilityDelegateCompat() {
-          @Override
           public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
             super.onInitializeAccessibilityEvent(host, event);
             event.setScrollable(mScrollEnabled);
-            setAccessibilityCollectionEvent(host, event);
+            if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+              if (allowOnInitializeAccessibilityEvent[0]) {
+                setAccessibilityCollectionEvent(host, event);
+                allowOnInitializeAccessibilityEvent[0] = false;
+              } else {
+                if (mHandler.hasMessages(SEND_EVENT, host)) {
+                  mHandler.removeMessages(SEND_EVENT, host);
+                }
+                Message msg = mHandler.obtainMessage(SEND_EVENT, host);
+                mHandler.sendMessageDelayed(msg, 200);
+              }
+            }
           }
 
           @Override
@@ -158,28 +186,9 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
     final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
     if (accessibilityCollectionInfo != null) {
       event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
-
-      View contentView = getContentView();
-
-      ReadableMap firstVisible = null;
-      ReadableMap lastVisible = null;
-
-      for(int index = 0; index < ((ViewGroup) contentView).getChildCount(); index++) {
-        View nextChild = ((ViewGroup) contentView).getChildAt(index);
-        boolean isVisible = isPartiallyScrolledInView(nextChild);
-
-        if (isVisible == true) {
-          if(firstVisible == null) {
-            firstVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
-          }
-          lastVisible = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
-        }
-
-        if (firstVisible != null && lastVisible != null && firstVisible.hasKey("itemIndex") && lastVisible.hasKey("itemIndex")) {
-          event.setFromIndex(firstVisible.getInt("itemIndex"));
-          event.setToIndex(lastVisible.getInt("itemIndex"));
-        }
-      }
+      event.setFromIndex(accessibilityCollectionInfo.getInt("firstVisibleIndex"));
+      event.setToIndex(accessibilityCollectionInfo.getInt("lastVisibleIndex"));
+      Log.d("settingEve", "" +event.getToIndex());
     }
   }
 

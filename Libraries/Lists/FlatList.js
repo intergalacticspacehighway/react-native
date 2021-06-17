@@ -156,6 +156,11 @@ export type Props<ItemT> = {
   ...
 };
 
+type State = {
+  firstVisibleIndex: number,
+  lastVisibleIndex: number,
+};
+
 const defaultProps = {
   numColumns: 1,
   /**
@@ -275,9 +280,14 @@ export type DefaultProps = typeof defaultProps;
  *
  * Also inherits [ScrollView Props](docs/scrollview.html#props), unless it is nested in another FlatList of same orientation.
  */
-class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
+class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, State> {
   static defaultProps: DefaultProps = defaultProps;
   props: Props<ItemT>;
+  state: State = {
+    firstVisibleIndex: 0,
+    lastVisibleIndex: 0,
+  };
+  _listRef = React.createRef();
   /**
    * Scrolls to the end of the content. May be janky without `getItemLayout` prop.
    */
@@ -414,6 +424,11 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
         ),
       });
     }
+
+    this._virtualizedListPairs.push({
+      viewabilityConfig: {itemVisiblePercentThreshold: 20},
+      onViewableItemsChanged: this._accessibilityViewableItemsChanged(),
+    });
   }
 
   componentDidUpdate(prevProps: Props<ItemT>) {
@@ -537,6 +552,28 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
     });
   }
 
+  _accessibilityViewableItemsChanged = () => {
+    return this._createOnViewableItemsChanged(({viewableItems}) => {
+      if (viewableItems.length > 1) {
+        const firstVisibleIndex = viewableItems[0].index;
+        const lastVisibleIndex = viewableItems[viewableItems.length - 1].index;
+        if (
+          typeof firstVisibleIndex === 'number' &&
+          typeof lastVisibleIndex === 'number'
+        ) {
+          console.log('statwt ', lastVisibleIndex, firstVisibleIndex);
+          this.setNativeProps({
+            accessibilityCollectionInfo: {
+              ...this._getAccessibilityCollectionInfo(),
+              firstVisibleIndex,
+              lastVisibleIndex,
+            },
+          });
+        }
+      }
+    });
+  };
+
   _createOnViewableItemsChanged(
     onViewableItemsChanged: ?(info: {
       viewableItems: Array<ViewToken>,
@@ -606,30 +643,11 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
           return (
             <View style={StyleSheet.compose(styles.row, columnWrapperStyle)}>
               {item.map((it, kk) => {
-                const accessibilityCollectionItemInfo = {
-                  rowIndex: index,
-                  rowSpan: 1,
-                  columnIndex: (index * numColumns + kk) % numColumns,
-                  columnSpan: 1,
-                  heading: false,
-                  itemIndex: index * numColumns + kk,
-                };
-
-                const element = (
-                  <View
-                    importantForAccessibility="yes"
-                    style={styles.cellStyle}
-                    accessibilityCollectionItemInfo={
-                      accessibilityCollectionItemInfo
-                    }>
-                    {renderer({
-                      item: it,
-                      index: index * numColumns + kk,
-                      separators: info.separators,
-                      accessibilityCollectionItemInfo,
-                    })}
-                  </View>
-                );
+                const element = renderer({
+                  item: it,
+                  index: index * numColumns + kk,
+                  separators: info.separators,
+                });
                 return element != null ? (
                   <React.Fragment key={kk}>{element}</React.Fragment>
                 ) : null;
@@ -637,25 +655,7 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
             </View>
           );
         } else {
-          const {index} = info;
-
-          const accessibilityCollectionItemInfo = {
-            rowIndex: index,
-            rowSpan: 1,
-            columnIndex: 0,
-            columnSpan: 1,
-            heading: false,
-            itemIndex: index,
-          };
-
-          return (
-            <View
-              importantForAccessibility="yes"
-              style={styles.cellStyle}
-              accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
-              {renderer(info)}
-            </View>
-          );
+          return renderer(info);
         }
       },
     };
@@ -667,12 +667,20 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, void> {
       rowCount: this._getItemCount(this.props.data),
       columnCount: this.props.numColumns,
       hierarchical: false,
+      firstVisibleIndex: 0,
+      lastVisibleIndex: 0,
     };
 
     return accessibilityCollectionProps;
   };
 
   render(): React.Node {
+    console.log(
+      'hello world ',
+      this.state.firstVisibleIndex,
+      this.state.lastVisibleIndex,
+    );
+
     const {numColumns, columnWrapperStyle, ...restProps} = this.props;
 
     return (
