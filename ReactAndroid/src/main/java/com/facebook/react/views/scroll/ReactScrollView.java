@@ -166,17 +166,45 @@ public class ReactScrollView extends ScrollView
         public void onInitializeAccessibilityEvent(View host, AccessibilityEvent event) {
           super.onInitializeAccessibilityEvent(host, event);
           event.setScrollable(mScrollEnabled);
-          if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-                if (allowOnInitializeAccessibilityEvent[0]) {
-                  setAccessibilityCollectionEvent(host, event);
-                  allowOnInitializeAccessibilityEvent[0] = false;
-                } else {
-                  if (mHandler.hasMessages(SEND_EVENT, host)) {
-                    mHandler.removeMessages(SEND_EVENT, host);
-                  }
-                  Message msg = mHandler.obtainMessage(SEND_EVENT, host);
-                  mHandler.sendMessageDelayed(msg, 200);
+          final ReadableMap accessibilityCollectionInfo = (ReadableMap) host.getTag(R.id.accessibility_collection_info);
+
+          if (accessibilityCollectionInfo != null) {
+            event.setItemCount(accessibilityCollectionInfo.getInt("itemCount"));
+            View contentView = getContentView();
+            Integer firstVisibleIndex = null;
+            Integer lastVisibleIndex = null;
+
+            for(int index = 0; index < ((ViewGroup) contentView).getChildCount(); index++) {
+              View nextChild = ((ViewGroup) contentView).getChildAt(index);
+              boolean isVisible = isPartiallyScrolledInView(nextChild);
+
+              ReadableMap accessibilityCollectionItemInfo = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
+
+              int childCount =  ((ViewGroup) nextChild).getChildCount();
+
+              // If this child's accessibilityCollectionItemInfo is null, we'll check one more nested child.
+              // Happens when getItemLayout is not passed in FlatList which adds an additional View in the hierarchy.
+              if (childCount > 0 && accessibilityCollectionItemInfo == null) {
+                View nestedNextChild =  ((ViewGroup) nextChild).getChildAt(0);
+                ReadableMap nestedChildAccessibilityInfo = (ReadableMap) nestedNextChild.getTag(R.id.accessibility_collection_item_info);
+                if (nestedChildAccessibilityInfo != null) {
+                  accessibilityCollectionItemInfo = nestedChildAccessibilityInfo;
+                }
               }
+
+              if (isVisible == true && accessibilityCollectionItemInfo != null) {
+                if(firstVisibleIndex == null) {
+                  firstVisibleIndex = accessibilityCollectionItemInfo.getInt("itemIndex");
+                }
+                lastVisibleIndex = accessibilityCollectionItemInfo.getInt("itemIndex");;
+              }
+              Log.d("onInitevent", firstVisibleIndex + " " + lastVisibleIndex);
+
+              if (firstVisibleIndex != null && lastVisibleIndex != null) {
+                event.setFromIndex(firstVisibleIndex);
+                event.setToIndex(lastVisibleIndex);
+              }
+            }
           }
         }
 

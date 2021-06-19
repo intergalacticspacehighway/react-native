@@ -643,11 +643,30 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, State> {
           return (
             <View style={StyleSheet.compose(styles.row, columnWrapperStyle)}>
               {item.map((it, kk) => {
-                const element = renderer({
-                  item: it,
-                  index: index * numColumns + kk,
-                  separators: info.separators,
-                });
+                const accessibilityCollectionItemInfo = {
+                  rowIndex: index,
+                  rowSpan: 1,
+                  columnIndex: (index * numColumns + kk) % numColumns,
+                  columnSpan: 1,
+                  heading: false,
+                  itemIndex: index * numColumns + kk,
+                };
+
+                const element = (
+                  <View
+                    importantForAccessibility="yes"
+                    style={{flex: 1}}
+                    accessibilityCollectionItemInfo={
+                      accessibilityCollectionItemInfo
+                    }>
+                    {renderer({
+                      item: it,
+                      index: index * numColumns + kk,
+                      separators: info.separators,
+                      accessibilityCollectionItemInfo,
+                    })}
+                  </View>
+                );
                 return element != null ? (
                   <React.Fragment key={kk}>{element}</React.Fragment>
                 ) : null;
@@ -655,7 +674,25 @@ class FlatList<ItemT> extends React.PureComponent<Props<ItemT>, State> {
             </View>
           );
         } else {
-          return renderer(info);
+          const {index} = info;
+
+          const accessibilityCollectionItemInfo = {
+            rowIndex: index,
+            rowSpan: 1,
+            columnIndex: 0,
+            columnSpan: 1,
+            heading: false,
+            itemIndex: index,
+          };
+
+          return (
+            <View
+              importantForAccessibility="yes"
+              style={{flex: 1}}
+              accessibilityCollectionItemInfo={accessibilityCollectionItemInfo}>
+              {renderer(info)}
+            </View>
+          );
         }
       },
     };
