@@ -134,11 +134,19 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
               Integer firstVisibleIndex = null;
               Integer lastVisibleIndex = null;
 
+              if (!(contentView instanceof ViewGroup)) {
+                return;
+              }
+
               for(int index = 0; index < ((ViewGroup) contentView).getChildCount(); index++) {
                 View nextChild = ((ViewGroup) contentView).getChildAt(index);
                 boolean isVisible = isPartiallyScrolledInView(nextChild);
 
                 ReadableMap accessibilityCollectionItemInfo = (ReadableMap) nextChild.getTag(R.id.accessibility_collection_item_info);
+
+                if (!(nextChild instanceof ViewGroup)) {
+                  return;
+                }
 
                 int childCount =  ((ViewGroup) nextChild).getChildCount();
 
@@ -172,6 +180,8 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
               View host, AccessibilityNodeInfoCompat info) {
             super.onInitializeAccessibilityNodeInfo(host, info);
             info.setScrollable(mScrollEnabled);
+            final ReactAccessibilityDelegate.AccessibilityRole accessibilityRole =
+              (ReactAccessibilityDelegate.AccessibilityRole) host.getTag(R.id.accessibility_role);
 
             if (accessibilityRole != null) {
               ReactAccessibilityDelegate.setRole(info, accessibilityRole, host.getContext());
