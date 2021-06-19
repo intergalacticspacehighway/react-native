@@ -220,8 +220,9 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
       int columnIndex = accessibilityCollectionItemInfo.getInt("columnIndex");
       int rowSpan = accessibilityCollectionItemInfo.getInt("rowSpan");
       int columnSpan = accessibilityCollectionItemInfo.getInt("columnSpan");
+      boolean heading = accessibilityCollectionItemInfo.getBoolean("heading");
 
-      AccessibilityNodeInfoCompat.CollectionItemInfoCompat collectionItemInfoCompat = AccessibilityNodeInfoCompat.CollectionItemInfoCompat.obtain(rowIndex, rowSpan, columnIndex, columnSpan, false);
+      AccessibilityNodeInfoCompat.CollectionItemInfoCompat collectionItemInfoCompat = AccessibilityNodeInfoCompat.CollectionItemInfoCompat.obtain(rowIndex, rowSpan, columnIndex, columnSpan, heading);
       info.setCollectionItemInfo(collectionItemInfoCompat);
     }
 
@@ -461,7 +462,8 @@ public class ReactAccessibilityDelegate extends AccessibilityDelegateCompat {
         && (view.getTag(R.id.accessibility_role) != null
             || view.getTag(R.id.accessibility_state) != null
             || view.getTag(R.id.accessibility_actions) != null
-            || view.getTag(R.id.react_test_id) != null)) {
+            || view.getTag(R.id.react_test_id) != null
+            || view.getTag(R.id.accessibility_collection_item_info) != null)) {
       ViewCompat.setAccessibilityDelegate(view, new ReactAccessibilityDelegate());
     }
   }
