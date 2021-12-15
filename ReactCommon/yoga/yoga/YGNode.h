@@ -56,6 +56,7 @@ private:
   YGStyle style_ = {};
   YGLayout layout_ = {};
   uint32_t lineIndex_ = 0;
+  uint32_t relativeToLineIndex_ = 0;
   YGNodeRef owner_ = nullptr;
   YGVector children_ = {};
   YGConfigRef config_;
@@ -85,8 +86,6 @@ private:
   using CompactValue = facebook::yoga::detail::CompactValue;
 
 public:
-    int rowIndex = 0;
-    int colIndex = 0;
   YGNode() : YGNode{YGConfigGetDefault()} {}
   explicit YGNode(const YGConfigRef config) : config_{config} {
     if (config->useWebDefaults) {
@@ -147,6 +146,8 @@ public:
   const YGLayout& getLayout() const { return layout_; }
 
   uint32_t getLineIndex() const { return lineIndex_; }
+    
+  uint32_t getRelativeToLineIndex() const { return relativeToLineIndex_; }
 
   bool isReferenceBaseline() {
     return facebook::yoga::detail::getBooleanData(flags, isReferenceBaseline_);
@@ -286,6 +287,8 @@ public:
   void setLayout(const YGLayout& layout) { layout_ = layout; }
 
   void setLineIndex(uint32_t lineIndex) { lineIndex_ = lineIndex; }
+    
+  void setRelativeToLineIndex(uint32_t relativeToLineIndex) { relativeToLineIndex_ = relativeToLineIndex; }
 
   void setIsReferenceBaseline(bool isReferenceBaseline) {
     facebook::yoga::detail::setBooleanData(

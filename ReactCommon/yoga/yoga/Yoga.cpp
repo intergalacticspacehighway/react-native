@@ -1975,8 +1975,7 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
     const float availableInnerWidth,
     const float availableInnerMainDim,
     const uint32_t startOfLineIndex,
-    const uint32_t lineCount,
-                                                                        const float columnGap) {
+    const uint32_t lineCount) {
   YGCollectFlexItemsRowValues flexAlgoRowMeasurement = {};
   flexAlgoRowMeasurement.relativeChildren.reserve(node->getChildren().size());
 
@@ -1987,11 +1986,12 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
 
   // Add items to the current line until it's full or we run out of items.
   uint32_t endOfLineIndex = startOfLineIndex;
-    uint32_t colIndex = 0;
+  uint32_t relativeToLineIndex = 0;
 
   for (; endOfLineIndex < node->getChildren().size(); endOfLineIndex++) {
     const YGNodeRef child = node->getChild(endOfLineIndex);
-      child->colIndex = colIndex;
+    
+    child->setRelativeToLineIndex(relativeToLineIndex);
       
     if (child->getStyle().display() == YGDisplayNone ||
         child->getStyle().positionType() == YGPositionTypeAbsolute) {
@@ -2009,9 +2009,6 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
             .unwrap();
 
       
-      // Do not add gap in first item
-//      float gapBetweenItem = child->colIndex > 0 ? rowGap : 0.0;
-      
     // If this is a multi-line flow and this item pushes us over the available
     // size, we've hit the end of the current line. Break out of the loop and
     // lay out the current line.
@@ -2019,8 +2016,8 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
                 flexBasisWithMinAndMaxConstraints + childMarginMainAxis >
             availableInnerMainDim &&
         isNodeFlexWrap && flexAlgoRowMeasurement.itemsOnLine > 0) {
-        colIndex = 0;
-        
+        relativeToLineIndex = 0;
+
       break;
     }
 
@@ -2030,7 +2027,7 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
         flexBasisWithMinAndMaxConstraints + childMarginMainAxis ;
     flexAlgoRowMeasurement.itemsOnLine++;
 
-      colIndex++;
+      relativeToLineIndex++;
       
     if (child->isNodeFlexible()) {
       flexAlgoRowMeasurement.totalFlexGrowFactors += child->resolveFlexGrow();
@@ -2734,9 +2731,6 @@ static void YGNodelayoutImpl(
 
   (performLayout ? layoutMarkerData.layouts : layoutMarkerData.measures) += 1;
 
-  float columnGap = node->resolveColumnGap();
-    
-  
   // Set the resolved resolution in the node's layout.
   const YGDirection direction = node->resolveDirection(ownerDirection);
   node->setLayoutDirection(direction);
@@ -2929,7 +2923,7 @@ static void YGNodelayoutImpl(
         availableInnerWidth,
         availableInnerMainDim,
         startOfLineIndex,
-        lineCount, columnGap);
+        lineCount);
     endOfLineIndex = collectedFlexItemsValues.endOfLineIndex;
 
     // If we don't need to measure the cross axis, we can skip the entire flex
