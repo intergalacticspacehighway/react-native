@@ -146,20 +146,47 @@ YGFloatOptional YGNode::getLeadingMargin(
     
         YGFloatOptional value = YGResolveValueMargin(leadingMargin, widthSize);
 
+//        if (owner_)
+        
+        if (owner_ != nullptr) {
+            
+            if (YGFlexDirectionIsRow(owner_->getStyle().flexDirection())) {
+                // if requested axis is row, increase marginStart of items with colIndex > 0
+                 if (this->colIndex > 0 && YGFlexDirectionIsRow(axis)) {
+                           float columnGap = owner_->resolveColumnGap();
+                               float newMarginLeft = value.isUndefined() || (value.unwrap() == 0.0f) ? columnGap :  value.unwrap() + columnGap;
+                               return YGFloatOptional(newMarginLeft);
+                       }
+                 // if requested axis is column, increase marginStart of items with colIndex > 0
+                 else if (this->getLineIndex() > 0 && YGFlexDirectionIsColumn(axis)) {
+                               float rowGap =  owner_->resolveRowGap();
+                               float newMarginTop = value.isUndefined() || (value.unwrap() == 0.0f) ? rowGap :  value.unwrap() + rowGap;
+                               return YGFloatOptional(newMarginTop);
+                       }
+                
+                
+            } else {
+                
+                // if requested axis is row, increase marginStart of items with colIndex > 0
+                if (this->colIndex > 0 && YGFlexDirectionIsColumn(axis) && owner_ != nullptr) {
+                    float rowGap =  owner_->resolveRowGap();
+                    float newMarginTop = value.isUndefined() || (value.unwrap() == 0.0f) ? rowGap :  value.unwrap() + rowGap;
+                    return YGFloatOptional(newMarginTop);
+                      }
+                // if requested axis is column, increase marginStart of items with colIndex > 0
+                else if (this->getLineIndex() > 0 && YGFlexDirectionIsRow(axis)  && owner_ != nullptr) {
+                              float columnGap =  owner_->resolveColumnGap();
+                              float newMarginLeft = value.isUndefined() || (value.unwrap() == 0.0f) ? columnGap :  value.unwrap() + columnGap;
+                              return YGFloatOptional(newMarginLeft);
+                      }
 
-  // if requested axis is row, increase marginStart of items with colIndex > 0
-  if (this->colIndex > 0 && YGFlexDirectionIsRow(axis) && owner_ != nullptr) {
-            float rowGap = owner_->resolveRowGap();
-                float newMarginLeft = value.isUndefined() || (value.unwrap() == 0.0f) ? rowGap :  value.unwrap() + rowGap;
-                return YGFloatOptional(newMarginLeft);
-        } 
-  // if requested axis is column, increase marginStart of items with colIndex > 0
-  else if (this->getLineIndex() > 0 && YGFlexDirectionIsColumn(axis)  && owner_ != nullptr) {
-                float columnGap =  owner_->resolveColumnGap();
-                float newMarginTop = value.isUndefined() || (value.unwrap() == 0.0f) ? columnGap :  value.unwrap() + columnGap;
-                return YGFloatOptional(newMarginTop);
+            }
+            
+        
         }
 
+ 
+        
         return value;
 }
 
