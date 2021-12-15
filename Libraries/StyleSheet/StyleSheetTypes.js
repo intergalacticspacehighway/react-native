@@ -432,6 +432,8 @@ type ____LayoutStyle_Internal = $ReadOnly<{|
    */
   flex?: number,
   flexGrow?: number,
+  rowGap?: number,
+  columnGap?: number,
   flexShrink?: number,
   flexBasis?: number | string,
 
@@ -472,6 +474,10 @@ type ____LayoutStyle_Internal = $ReadOnly<{|
    *  @platform ios
    */
   direction?: 'inherit' | 'ltr' | 'rtl',
+
+  rowGap?: number,
+
+  columnGap?: number,
 |}>;
 
 type ____TransformStyle_Internal = $ReadOnly<{|

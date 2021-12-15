@@ -11,6 +11,7 @@
 #include <string.h>
 #include <algorithm>
 #include <atomic>
+#include <iostream>
 #include <memory>
 #include "Utils.h"
 #include "YGNode.h"
@@ -81,6 +82,13 @@ static int YGAndroidLog(
 }
 #else
 #define YG_UNUSED(x) (void) (x);
+
+
+template <typename T>
+void myLogger(T x) {
+  std::cout << "My Logger ::" << x << std::endl;
+}
+
 
 static int YGDefaultLog(
     const YGConfigRef config,
@@ -505,11 +513,24 @@ YOGA_EXPORT float YGNodeStyleGetFlexGrow(const YGNodeConstRef node) {
       : node->getStyle().flexGrow().unwrap();
 }
 
+YOGA_EXPORT float YGNodeStyleGetRowGap(const YGNodeConstRef node) {
+  return node->getStyle().rowGap().isUndefined()
+      ? 0.0
+      : node->getStyle().rowGap().unwrap();
+}
+
 YOGA_EXPORT float YGNodeStyleGetFlexShrink(const YGNodeConstRef node) {
   return node->getStyle().flexShrink().isUndefined()
       ? (node->getConfig()->useWebDefaults ? kWebDefaultFlexShrink
                                            : kDefaultFlexShrink)
       : node->getStyle().flexShrink().unwrap();
+}
+
+
+YOGA_EXPORT float YGNodeStyleGetColumnGap(const YGNodeConstRef node) {
+  return node->getStyle().columnGap().isUndefined()
+      ? 0.0
+      : node->getStyle().columnGap().unwrap();
 }
 
 namespace {
@@ -673,6 +694,24 @@ YOGA_EXPORT void YGNodeStyleSetFlexGrow(
   updateStyle<MSVC_HINT(flexGrow)>(
       node, &YGStyle::flexGrow, YGFloatOptional{flexGrow});
 }
+
+// TODO(T26792433): Change the API to accept YGFloatOptional.
+YOGA_EXPORT void YGNodeStyleSetRowGap(
+    const YGNodeRef node,
+    const float rowGap) {
+  updateStyle<MSVC_HINT(rowGap)>(
+      node, &YGStyle::rowGap, YGFloatOptional{rowGap});
+}
+
+
+// TODO(T26792433): Change the API to accept YGFloatOptional.
+YOGA_EXPORT void YGNodeStyleSetColumnGap(
+    const YGNodeRef node,
+    const float columnGap) {
+  updateStyle<MSVC_HINT(columnGap)>(
+      node, &YGStyle::columnGap, YGFloatOptional{columnGap});
+}
+
 
 // TODO(T26792433): Change the API to accept YGFloatOptional.
 YOGA_EXPORT void YGNodeStyleSetFlexShrink(
@@ -1964,7 +2003,8 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
     const float availableInnerWidth,
     const float availableInnerMainDim,
     const uint32_t startOfLineIndex,
-    const uint32_t lineCount) {
+    const uint32_t lineCount,
+    const float rowGap) {
   YGCollectFlexItemsRowValues flexAlgoRowMeasurement = {};
   flexAlgoRowMeasurement.relativeChildren.reserve(node->getChildren().size());
 
@@ -1975,8 +2015,14 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
 
   // Add items to the current line until it's full or we run out of items.
   uint32_t endOfLineIndex = startOfLineIndex;
+  
+  uint32_t colIndex = 0;
+    
   for (; endOfLineIndex < node->getChildren().size(); endOfLineIndex++) {
     const YGNodeRef child = node->getChild(endOfLineIndex);
+    
+    child->colIndex = colIndex;
+      
     if (child->getStyle().display() == YGDisplayNone ||
         child->getStyle().positionType() == YGPositionTypeAbsolute) {
       continue;
@@ -1992,22 +2038,30 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
             mainAxisownerSize)
             .unwrap();
 
+      
+      // Do not add gap in first item
+      float gapBetweenItem = child->colIndex > 0 ? rowGap : 0.0;
+
     // If this is a multi-line flow and this item pushes us over the available
     // size, we've hit the end of the current line. Break out of the loop and
     // lay out the current line.
     if (sizeConsumedOnCurrentLineIncludingMinConstraint +
-                flexBasisWithMinAndMaxConstraints + childMarginMainAxis >
+                flexBasisWithMinAndMaxConstraints + childMarginMainAxis + gapBetweenItem  >
             availableInnerMainDim &&
         isNodeFlexWrap && flexAlgoRowMeasurement.itemsOnLine > 0) {
+    
+        
+        colIndex = 0;
       break;
     }
-
+      
     sizeConsumedOnCurrentLineIncludingMinConstraint +=
-        flexBasisWithMinAndMaxConstraints + childMarginMainAxis;
+        flexBasisWithMinAndMaxConstraints + childMarginMainAxis + gapBetweenItem;
     flexAlgoRowMeasurement.sizeConsumedOnCurrentLine +=
-        flexBasisWithMinAndMaxConstraints + childMarginMainAxis;
+        flexBasisWithMinAndMaxConstraints + childMarginMainAxis + gapBetweenItem;
     flexAlgoRowMeasurement.itemsOnLine++;
-
+      colIndex++;
+      
     if (child->isNodeFlexible()) {
       flexAlgoRowMeasurement.totalFlexGrowFactors += child->resolveFlexGrow();
 
@@ -2033,6 +2087,11 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
     flexAlgoRowMeasurement.totalFlexShrinkScaledFactors = 1;
   }
   flexAlgoRowMeasurement.endOfLineIndex = endOfLineIndex;
+    
+    myLogger("items on line");
+    
+    myLogger(flexAlgoRowMeasurement.itemsOnLine);
+    
   return flexAlgoRowMeasurement;
 }
 
@@ -2409,7 +2468,8 @@ static void YGJustifyMainAxis(
     const float availableInnerCrossDim,
     const float availableInnerWidth,
     const bool performLayout,
-    void* const layoutContext) {
+    void* const layoutContext,
+    const float rowGap) {
   const auto& style = node->getStyle();
   const float leadingPaddingAndBorderMain =
       node->getLeadingPaddingAndBorder(mainAxis, ownerWidth).unwrap();
@@ -2465,13 +2525,14 @@ static void YGJustifyMainAxis(
   float betweenMainDim = 0;
   const YGJustify justifyContent = node->getStyle().justifyContent();
 
+
   if (numberOfAutoMarginsOnCurrentLine == 0) {
     switch (justifyContent) {
       case YGJustifyCenter:
-        leadingMainDim = collectedFlexItemsValues.remainingFreeSpace / 2;
+        leadingMainDim = (collectedFlexItemsValues.remainingFreeSpace) / 2;
         break;
       case YGJustifyFlexEnd:
-        leadingMainDim = collectedFlexItemsValues.remainingFreeSpace;
+        leadingMainDim = (collectedFlexItemsValues.remainingFreeSpace);
         break;
       case YGJustifySpaceBetween:
         if (collectedFlexItemsValues.itemsOnLine > 1) {
@@ -2484,13 +2545,13 @@ static void YGJustifyMainAxis(
         break;
       case YGJustifySpaceEvenly:
         // Space is distributed evenly across all elements
-        betweenMainDim = collectedFlexItemsValues.remainingFreeSpace /
+        betweenMainDim = (collectedFlexItemsValues.remainingFreeSpace) /
             (collectedFlexItemsValues.itemsOnLine + 1);
         leadingMainDim = betweenMainDim;
         break;
       case YGJustifySpaceAround:
         // Space on the edges is half of the space between elements
-        betweenMainDim = collectedFlexItemsValues.remainingFreeSpace /
+        betweenMainDim = (collectedFlexItemsValues.remainingFreeSpace) /
             collectedFlexItemsValues.itemsOnLine;
         leadingMainDim = betweenMainDim / 2;
         break;
@@ -2502,6 +2563,8 @@ static void YGJustifyMainAxis(
   collectedFlexItemsValues.mainDim =
       leadingPaddingAndBorderMain + leadingMainDim;
   collectedFlexItemsValues.crossDim = 0;
+    // We remove the gap from remaining free space. This seems to be not needed, verify later
+  // collectedFlexItemsValues.remainingFreeSpace -= rowGap > betweenMainDim ? minColumnGap : 0.0;
 
   float maxAscentForCurrentLine = 0;
   float maxDescentForCurrentLine = 0;
@@ -2542,7 +2605,7 @@ static void YGJustifyMainAxis(
         if (performLayout) {
           child->setLayoutPosition(
               childLayout.position[pos[mainAxis]] +
-                  collectedFlexItemsValues.mainDim,
+                collectedFlexItemsValues.mainDim,
               pos[mainAxis]);
         }
 
@@ -2564,7 +2627,7 @@ static void YGJustifyMainAxis(
         } else {
           // The main dimension is the sum of all the elements dimension plus
           // the spacing.
-          collectedFlexItemsValues.mainDim += betweenMainDim +
+          collectedFlexItemsValues.mainDim += betweenMainDim + ((child->colIndex != collectedFlexItemsValues.itemsOnLine - 1) ? rowGap : 0.0) +
               YGNodeDimWithMargin(child, mainAxis, availableInnerWidth);
 
           if (isNodeBaselineLayout) {
@@ -2611,6 +2674,16 @@ static void YGJustifyMainAxis(
         maxAscentForCurrentLine + maxDescentForCurrentLine;
   }
 }
+
+
+
+// Based on my understanding of this alog, we get the root view over here.
+// The root view recursively calls it's children and all the nodes receive their placement info based on their dimensions etc.
+// I guess max content dimension is calculated on the native side and passed here
+// Questions
+// 1. How do Text nodes get their height/width
+
+
 
 //
 // This is the main routine that implements a subset of the flexbox layout
@@ -2693,6 +2766,19 @@ static void YGNodelayoutImpl(
     const uint32_t depth,
     const uint32_t generationCount,
     const LayoutPassReason reason) {
+  Log::log(node, YGLogLevelVerbose, nullptr, "hello world from yoga!");
+
+  myLogger("Available height");
+  myLogger(availableHeight);
+  myLogger("Available width");
+  myLogger(availableWidth);
+
+  myLogger("owner width");
+  myLogger(ownerWidth);
+  myLogger("owner height");
+
+  myLogger(ownerHeight);
+
   YGAssertWithNode(
       node,
       YGFloatIsUndefined(availableWidth)
@@ -2756,7 +2842,11 @@ static void YGNodelayoutImpl(
   node->setLayoutPadding(
       node->getTrailingPadding(flexColumnDirection, ownerWidth).unwrap(),
       YGEdgeBottom);
-
+    
+  // the below function sets the height/width of a node using measure function
+  // I think this measure function comes from native side. e.g. Text nodes.
+  // It also skips calling measure if height/width is given
+  // not sure why it returns though. I think due to recursion?
   if (node->hasMeasureFunc()) {
     YGNodeWithMeasureFuncSetMeasuredDimensions(
         node,
@@ -2773,6 +2863,7 @@ static void YGNodelayoutImpl(
   }
 
   const uint32_t childCount = YGNodeGetChildCount(node);
+  // when childCount is 0 we can set the height/width using container's styles or availableWidth/height
   if (childCount == 0) {
     YGNodeEmptyContainerSetMeasuredDimensions(
         node,
@@ -2834,8 +2925,13 @@ static void YGNodelayoutImpl(
   const float paddingAndBorderAxisColumn =
       isMainAxisRow ? paddingAndBorderAxisCross : paddingAndBorderAxisMain;
 
-  // STEP 2: DETERMINE AVAILABLE SIZE IN MAIN AND CROSS DIRECTIONS
+    float propRowGap = node->resolveRowGap();
+    float propColumnGap = node->resolveColumnGap();
 
+    float rowGap = isMainAxisRow ? propRowGap : propColumnGap;
+    float columnGap = isMainAxisRow ? propColumnGap : propRowGap;
+
+  // STEP 2: DETERMINE AVAILABLE SIZE IN MAIN AND CROSS DIRECTIONS
   float availableInnerWidth = YGNodeCalculateAvailableInnerDim(
       node,
       YGDimensionWidth,
@@ -2895,6 +2991,9 @@ static void YGNodelayoutImpl(
   YGCollectFlexItemsRowValues collectedFlexItemsValues;
   for (; endOfLineIndex < childCount;
        lineCount++, startOfLineIndex = endOfLineIndex) {
+    
+    totalLineCrossDim += (lineCount > 0 ? rowGap : 0.0);
+    
     collectedFlexItemsValues = YGCalculateCollectFlexItemsRowValues(
         node,
         ownerDirection,
@@ -2902,7 +3001,8 @@ static void YGNodelayoutImpl(
         availableInnerWidth,
         availableInnerMainDim,
         startOfLineIndex,
-        lineCount);
+        lineCount,
+                                                                    columnGap);
     endOfLineIndex = collectedFlexItemsValues.endOfLineIndex;
 
     // If we don't need to measure the cross axis, we can skip the entire flex
@@ -3029,7 +3129,8 @@ static void YGNodelayoutImpl(
         availableInnerCrossDim,
         availableInnerWidth,
         performLayout,
-        layoutContext);
+        layoutContext,
+                      columnGap);
 
     float containerCrossAxis = availableInnerCrossDim;
     if (measureModeCrossDim == YGMeasureModeUndefined ||
@@ -3312,10 +3413,12 @@ static void YGNodelayoutImpl(
             continue;
           }
           if (child->getStyle().positionType() != YGPositionTypeAbsolute) {
+            const float effectiveRowGap = child->getLineIndex() * rowGap;
+              
             switch (YGNodeAlignItem(node, child)) {
               case YGAlignFlexStart: {
                 child->setLayoutPosition(
-                    currentLead +
+                    currentLead + effectiveRowGap +
                         child->getLeadingMargin(crossAxis, availableInnerWidth)
                             .unwrap(),
                     pos[crossAxis]);
@@ -3323,7 +3426,7 @@ static void YGNodelayoutImpl(
               }
               case YGAlignFlexEnd: {
                 child->setLayoutPosition(
-                    currentLead + lineHeight -
+                    currentLead + effectiveRowGap + lineHeight -
                         child->getTrailingMargin(crossAxis, availableInnerWidth)
                             .unwrap() -
                         child->getLayout().measuredDimensions[dim[crossAxis]],
@@ -3335,13 +3438,13 @@ static void YGNodelayoutImpl(
                     child->getLayout().measuredDimensions[dim[crossAxis]];
 
                 child->setLayoutPosition(
-                    currentLead + (lineHeight - childHeight) / 2,
+                    currentLead + effectiveRowGap + (lineHeight - childHeight) / 2,
                     pos[crossAxis]);
                 break;
               }
               case YGAlignStretch: {
                 child->setLayoutPosition(
-                    currentLead +
+                    currentLead + effectiveRowGap +
                         child->getLeadingMargin(crossAxis, availableInnerWidth)
                             .unwrap(),
                     pos[crossAxis]);
@@ -3394,7 +3497,7 @@ static void YGNodelayoutImpl(
               }
               case YGAlignBaseline: {
                 child->setLayoutPosition(
-                    currentLead + maxAscentForCurrentLine -
+                    currentLead + effectiveRowGap + maxAscentForCurrentLine -
                         YGBaseline(child, layoutContext) +
                         child
                             ->getLeadingPosition(
@@ -4191,7 +4294,7 @@ YOGA_EXPORT void YGNodeCalculateLayoutWithContext(
     YGRoundToPixelGrid(node, node->getConfig()->pointScaleFactor, 0.0f, 0.0f);
 
 #ifdef DEBUG
-    if (node->getConfig()->printTree) {
+    if (true) {
       YGNodePrint(
           node,
           (YGPrintOptions) (YGPrintOptionsLayout | YGPrintOptionsChildren | YGPrintOptionsStyle));

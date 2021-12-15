@@ -34,6 +34,8 @@ export default function splitLayoutProps(props: ?____ViewStyle_Internal): {
         case 'marginRight':
         case 'flex':
         case 'flexGrow':
+        case 'rowGap':
+        case 'columnGap':
         case 'flexShrink':
         case 'flexBasis':
         case 'alignSelf':

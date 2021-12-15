@@ -446,6 +446,23 @@ float YGNode::resolveFlexGrow() const {
   return kDefaultFlexGrow;
 }
 
+float YGNode::resolveRowGap() const {
+  if (!style_.rowGap().isUndefined()) {
+    return style_.rowGap().unwrap();
+  }
+ 
+  return 0.0;
+}
+
+
+float YGNode::resolveColumnGap() const {
+  if (!style_.columnGap().isUndefined()) {
+    return style_.columnGap().unwrap();
+  }
+ 
+  return 0.0;
+}
+
 float YGNode::resolveFlexShrink() const {
   if (owner_ == nullptr) {
     return 0.0;

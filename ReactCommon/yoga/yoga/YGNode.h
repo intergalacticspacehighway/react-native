@@ -85,6 +85,8 @@ private:
   using CompactValue = facebook::yoga::detail::CompactValue;
 
 public:
+    int rowIndex = 0;
+    int colIndex = 0;
   YGNode() : YGNode{YGConfigGetDefault()} {}
   explicit YGNode(const YGConfigRef config) : config_{config} {
     if (config->useWebDefaults) {
@@ -338,6 +340,8 @@ public:
   void cloneChildrenIfNeeded(void*);
   void markDirtyAndPropogate();
   float resolveFlexGrow() const;
+  float resolveRowGap() const;
+  float resolveColumnGap() const;
   float resolveFlexShrink() const;
   bool isNodeFlexible();
   bool didUseLegacyFlag();
