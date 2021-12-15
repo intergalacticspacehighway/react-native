@@ -2019,8 +2019,6 @@ static YGCollectFlexItemsRowValues YGCalculateCollectFlexItemsRowValues(
                 flexBasisWithMinAndMaxConstraints + childMarginMainAxis >
             availableInnerMainDim &&
         isNodeFlexWrap && flexAlgoRowMeasurement.itemsOnLine > 0) {
-        std::cout << "Lololol" << std::endl;
-        std::cout << childMarginMainAxis << std::endl;
         colIndex = 0;
         
       break;
@@ -2736,34 +2734,7 @@ static void YGNodelayoutImpl(
 
   (performLayout ? layoutMarkerData.layouts : layoutMarkerData.measures) += 1;
 
-
-    float rowGap = node->resolveRowGap();
-//    float columnGap = node->resolveColumnGap();
-    
-  
-    
-    
-    myLogger("parent row gap");
-//    myLogger(rowGap);
-//    myLogger(columnGap);
-    
-    if (rowGap) {
-        myLogger("please!");
-//        node->style_.margin_.set<1>(rowGap);
-//        node->getStyle().margin()[YGEdgeLeft] = rowGap;
-//        auto yogaStyle = node->getStyle();
-//        YGValue v = YGValue();
-//        v.value = rowGap;
-//        v.unit = YGUnitPoint;
-        
-//        yogaStyle.margin()[YGEdgeLeft] =  v;
-
-//        auto yogaStyle  = node->getStyle();
-//        myLogger(yogaStyle.margin()[
-//        myLogger();
-    }
-    
-//    node->getStyle().margin_.get<1>()
+  float columnGap = node->resolveColumnGap();
     
   
   // Set the resolved resolution in the node's layout.
@@ -2958,7 +2929,7 @@ static void YGNodelayoutImpl(
         availableInnerWidth,
         availableInnerMainDim,
         startOfLineIndex,
-        lineCount, node->getStyle().columnGap_.isUndefined() ? 0.0f : node->getStyle().columnGap_.unwrap());
+        lineCount, columnGap);
     endOfLineIndex = collectedFlexItemsValues.endOfLineIndex;
 
     // If we don't need to measure the cross axis, we can skip the entire flex
