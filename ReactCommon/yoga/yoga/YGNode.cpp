@@ -143,7 +143,24 @@ YGFloatOptional YGNode::getLeadingMargin(
             style_.margin(), YGEdgeStart, leading[axis], CompactValue::ofZero())
       : computeEdgeValueForColumn(
             style_.margin(), leading[axis], CompactValue::ofZero());
-  return YGResolveValueMargin(leadingMargin, widthSize);
+    
+        YGFloatOptional value = YGResolveValueMargin(leadingMargin, widthSize);
+
+
+  // if requested axis is row, increase marginStart of items with colIndex > 0
+  if (this->colIndex > 0 && YGFlexDirectionIsRow(axis)) {
+            float rowGap = resolveRowGap();
+                float newMarginLeft = value.isUndefined() || (value.unwrap() == 0.0f) ? rowGap :  value.unwrap() + rowGap;
+                return YGFloatOptional(newMarginLeft);
+        } 
+  // if requested axis is column, increase marginStart of items with colIndex > 0
+  else if (this->getLineIndex() > 0 && YGFlexDirectionIsColumn(axis)) {
+                float columnGap = resolveColumnGap();
+                float newMarginTop = value.isUndefined() || (value.unwrap() == 0.0f) ? columnGap :  value.unwrap() + columnGap;
+                return YGFloatOptional(newMarginTop);
+        }
+
+        return value;
 }
 
 YGFloatOptional YGNode::getTrailingMargin(
@@ -447,17 +464,25 @@ float YGNode::resolveFlexGrow() const {
 }
 
 float YGNode::resolveRowGap() const {
-  if (!style_.rowGap().isUndefined()) {
-    return style_.rowGap().unwrap();
+  if (owner_ == nullptr) {
+    return 0.0;
   }
- 
+      
+  if (!owner_->getStyle().rowGap_.isUndefined()) {
+    return owner_->getStyle().rowGap_.unwrap();
+  }
+
   return 0.0;
 }
 
 
 float YGNode::resolveColumnGap() const {
-  if (!style_.columnGap().isUndefined()) {
-    return style_.columnGap().unwrap();
+  if (owner_ == nullptr) {
+    return 0.0;
+  }
+    
+  if (!owner_->getStyle().columnGap_.isUndefined()) {
+    return owner_->getStyle().columnGap_.unwrap();
   }
  
   return 0.0;
