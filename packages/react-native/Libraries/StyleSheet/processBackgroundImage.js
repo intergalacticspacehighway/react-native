@@ -46,21 +46,17 @@ export default function processBackgroundImage(
   } else if (Array.isArray(backgroundImage)) {
     for (const bgImage of backgroundImage) {
       const processedColorStops: Array<{
-        color: ProcessedColorValue,
+        color: ProcessedColorValue | null,
         position: number | null,
       }> = [];
       for (let index = 0; index < bgImage.colorStops.length; index++) {
         const colorStop = bgImage.colorStops[index];
         const processedColor = processColor(colorStop.color);
-        if (processedColor == null) {
-          // If a color is invalid, return an empty array and do not apply gradient. Same as web.
-          return [];
-        }
         if (colorStop.positions != null && colorStop.positions.length > 0) {
           for (const position of colorStop.positions) {
             if (position.endsWith('%')) {
               processedColorStops.push({
-                color: processedColor,
+                color: processedColor == null ? null : processedColor,
                 position: parseFloat(position) / 100,
               });
             } else {
@@ -70,7 +66,7 @@ export default function processBackgroundImage(
           }
         } else {
           processedColorStops.push({
-            color: processedColor,
+            color: processedColor == null ? null : processedColor,
             position: null,
           });
         }
@@ -98,13 +94,15 @@ export default function processBackgroundImage(
       }
 
       const fixedColorStops = getFixedColorStops(processedColorStops);
+      const replacedColorHintsWithColorStops =
+        replaceColorHintsWithColorStops(fixedColorStops);
 
       if (points != null) {
         result = result.concat({
           type: 'linearGradient',
           start: points.start,
           end: points.end,
-          colorStops: fixedColorStops,
+          colorStops: replacedColorHintsWithColorStops,
         });
       }
     }
@@ -195,12 +193,14 @@ function parseCSSLinearGradient(
     }
 
     const fixedColorStops = getFixedColorStops(colorStops);
+    const colorStopsProcessedHints =
+      replaceColorHintsWithColorStops(fixedColorStops);
 
     gradients.push({
       type: 'linearGradient',
       start: points.start,
       end: points.end,
-      colorStops: fixedColorStops,
+      colorStops: colorStopsProcessedHints,
     });
   }
 
@@ -309,15 +309,15 @@ function parseAngle(angle: string): ?number {
 // https://drafts.csswg.org/css-images-4/#color-stop-fixup
 function getFixedColorStops(
   colorStops: $ReadOnlyArray<{
-    color: ProcessedColorValue,
+    color: ProcessedColorValue | null,
     position: number | null,
   }>,
 ): Array<{
-  color: ProcessedColorValue,
+  color: ProcessedColorValue | null,
   position: number,
 }> {
   let fixedColorStops: Array<{
-    color: ProcessedColorValue,
+    color: ProcessedColorValue | null,
     position: number,
   }> = [];
   let hasNullPositions = false;
@@ -381,4 +381,124 @@ function getFixedColorStops(
   }
 
   return fixedColorStops;
+}
+
+function areFloatsNearlyEqual(a: number, b: number) {
+  const epsilon = 1e-6;
+  return Math.abs(a - b) < epsilon;
+}
+
+function replaceColorHintsWithColorStops(
+  fixedColorStops: Array<{
+    color: ProcessedColorValue | null,
+    position: number,
+  }>,
+) {
+  let indexOffset = 0;
+  let stops = JSON.parse(JSON.stringify(fixedColorStops));
+  for (let i = 1; i < fixedColorStops.length - 1; i++) {
+    const colorStop = fixedColorStops[i];
+    // Is a color hint
+    if (colorStop.color !== null) {
+      continue;
+    }
+    let x = i + indexOffset;
+    if (x < 1) {
+      continue;
+    }
+
+    let offsetLeft = stops[x - 1].position;
+    let offsetRight = stops[x + 1].position;
+    let offset = stops[x].position;
+    let leftDist = offset - offsetLeft;
+    let rightDist = offsetRight - offset;
+    let totalDist = offsetRight - offsetLeft;
+    let leftColor = stops[x - 1].color;
+    let rightColor = stops[x + 1].color;
+
+    if (areFloatsNearlyEqual(leftDist, rightDist)) {
+      stops.splice(x, 1);
+      indexOffset--;
+    }
+
+    if (areFloatsNearlyEqual(leftDist, 0)) {
+      stops[x].color = rightColor;
+      continue;
+    }
+
+    if (areFloatsNearlyEqual(rightDist, 0)) {
+      stops[x].color = leftColor;
+      continue;
+    }
+    let newStops: typeof stops = [];
+
+    // Position the new color stops
+    if (leftDist > rightDist) {
+      for (let y = 0; y < 7; y++) {
+        newStops[y] = {position: offsetLeft + leftDist * ((7 + y) / 13)};
+      }
+      newStops[7] = {position: offset + rightDist * (1 / 3)};
+      newStops[8] = {position: offset + rightDist * (2 / 3)};
+    } else {
+      newStops[0] = {position: offsetLeft + leftDist * (1 / 3)};
+      newStops[1] = {position: offsetLeft + leftDist * (2 / 3)};
+      for (let y = 0; y < 7; y++) {
+        newStops[y + 2] = {position: offset + rightDist * (y / 13)};
+      }
+    }
+
+    // Calculate colors for the new color stops
+    let hintRelativeOffset = leftDist / totalDist;
+    for (let newStop of newStops) {
+      let pointRelativeOffset = (newStop.position - offsetLeft) / totalDist;
+      let weighting = Math.pow(
+        pointRelativeOffset,
+        Math.log(0.5) / Math.log(hintRelativeOffset),
+      );
+      if (!isFinite(weighting) || isNaN(weighting)) {
+        continue;
+      }
+
+      newStop.color = interpolateNormalizedColor(
+        leftColor,
+        rightColor,
+        weighting,
+      );
+    }
+
+    stops.splice(x, 1, ...newStops);
+    indexOffset += 8;
+  }
+
+  return stops;
+}
+
+// interpolate normalized colors
+function interpolateNormalizedColor(
+  color1: number,
+  color2: number,
+  weight: number,
+) {
+  // ensure weight is between 0 and 1
+  const newWeight = Math.max(0, Math.min(1, weight));
+
+  // extract color components
+  const r1 = (color1 >> 24) & 0xff;
+  const g1 = (color1 >> 16) & 0xff;
+  const b1 = (color1 >> 8) & 0xff;
+  const a1 = color1 & 0xff;
+
+  const r2 = (color2 >> 24) & 0xff;
+  const g2 = (color2 >> 16) & 0xff;
+  const b2 = (color2 >> 8) & 0xff;
+  const a2 = color2 & 0xff;
+
+  // interpolate each channel
+  const r = Math.round(r1 + (r2 - r1) * newWeight);
+  const g = Math.round(g1 + (g2 - g1) * newWeight);
+  const b = Math.round(b1 + (b2 - b1) * newWeight);
+  const a = Math.round(a1 + (a2 - a1) * newWeight);
+
+  // combine channels back into a single integer
+  return (r << 24) | (g << 16) | (b << 8) | a;
 }
