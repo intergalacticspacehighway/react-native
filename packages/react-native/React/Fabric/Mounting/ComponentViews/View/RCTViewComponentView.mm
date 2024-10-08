@@ -1016,7 +1016,9 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   // background image
   [self clearExistingGradientLayers];
   if (!_props->backgroundImage.empty()) {
-    for (const auto &gradient : _props->backgroundImage) {
+    // iterate in reverse to match CSS specification
+    for (auto it = _props->backgroundImage.rbegin(); it != _props->backgroundImage.rend(); ++it) {
+      const auto& gradient = *it;
       CAGradientLayer *gradientLayer = [CAGradientLayer layer];
       NSMutableArray *colors = [NSMutableArray array];
       NSMutableArray *locations = [NSMutableArray array];
