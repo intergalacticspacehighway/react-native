@@ -1101,26 +1101,42 @@ export type StyleProp<out T> =
   | ReadonlyArray<StyleProp<T>>;
 
 export type ____DangerouslyImpreciseStyleProp_Internal = StyleProp<
-  Partial<____DangerouslyImpreciseStyle_Internal>,
+  ____WithConditionalValues_Internal<
+    Partial<____DangerouslyImpreciseStyle_Internal>,
+  >,
 >;
 
 export type ____DangerouslyImpreciseAnimatedStyleProp_Internal =
   WithAnimatedValue<StyleProp<Partial<____DangerouslyImpreciseStyle_Internal>>>;
 
 export type ____ViewStyleProp_Internal = StyleProp<
-  Readonly<Partial<____ViewStyle_Internal>>,
+  ____WithConditionalValues_Internal<Readonly<Partial<____ViewStyle_Internal>>>,
 >;
 export type ____TextStyleProp_Internal = StyleProp<
-  Readonly<Partial<____TextStyle_Internal>>,
+  ____WithConditionalValues_Internal<Readonly<Partial<____TextStyle_Internal>>>,
 >;
 export type ____ImageStyleProp_Internal = StyleProp<
-  Readonly<Partial<____ImageStyle_Internal>>,
+  ____WithConditionalValues_Internal<Readonly<Partial<____ImageStyle_Internal>>>,
 >;
+
+// A style value may be authored as a default plus media-query branches, e.g.
+// `{default: 100, '@media (min-width: 600)': 300}`, resolved natively.
+export type ____ConditionalStyleValue_Internal<out T> = Readonly<{
+  default: T,
+  [query: string]: T,
+}>;
+
+// Widens each property of a style object to also accept a conditional value.
+type ____WithConditionalValues_Internal<out T> = {
+  [K in keyof T]: T[K] | ____ConditionalStyleValue_Internal<T[K]>,
+};
 
 export type ____Styles_Internal = {
   // $FlowFixMe[incompatible-exact]
   // $FlowFixMe[incompatible-type]
-  readonly [key: string]: Partial<____DangerouslyImpreciseStyle_Internal>,
+  readonly [key: string]: ____WithConditionalValues_Internal<
+    Partial<____DangerouslyImpreciseStyle_Internal>,
+  >,
   ...
 };
 
