@@ -61,6 +61,17 @@ void FabricUIManagerBinding::driveCxxAnimations() {
   scheduler->animationTick();
 }
 
+void FabricUIManagerBinding::onColorSchemeChanged(jboolean isDarkColorScheme) {
+  auto scheduler = getScheduler();
+  if (!scheduler) {
+    LOG(ERROR)
+        << "FabricUIManagerBinding::onColorSchemeChanged: scheduler disappeared";
+    return;
+  }
+  scheduler->onColorSchemeDidChange(
+      isDarkColorScheme ? ColorScheme::Dark : ColorScheme::Light);
+}
+
 void FabricUIManagerBinding::driveAnimationBackend(jlong frameTimeNanos) {
   if (!animationChoreographer_) {
     LOG(ERROR)
@@ -860,6 +871,8 @@ void FabricUIManagerBinding::registerNatives() {
           "setPixelDensity", FabricUIManagerBinding::setPixelDensity),
       makeNativeMethod(
           "driveCxxAnimations", FabricUIManagerBinding::driveCxxAnimations),
+      makeNativeMethod(
+          "onColorSchemeChanged", FabricUIManagerBinding::onColorSchemeChanged),
       makeNativeMethod(
           "driveAnimationBackend",
           FabricUIManagerBinding::driveAnimationBackend),

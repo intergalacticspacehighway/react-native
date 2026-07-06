@@ -132,9 +132,6 @@ ShadowNode::ShadowNode(
     }
     propagateUncullableTraitsFromChildren();
   }
-  // Unconditional, unlike the uncullable trait: this node's own contribution
-  // is props-derived, and a clone may change props while keeping children
-  // (e.g. a media query patch), which flips the self bit.
   propagateStyleConditionsTrait();
 }
 

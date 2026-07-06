@@ -127,6 +127,8 @@ class FabricUIManagerBinding : public jni::HybridClass<FabricUIManagerBinding>,
 
   void driveCxxAnimations();
 
+  void onColorSchemeChanged(jboolean isDarkColorScheme);
+
   void driveAnimationBackend(jlong frameTimeNanos);
 
   void drainPreallocateViewsQueue();

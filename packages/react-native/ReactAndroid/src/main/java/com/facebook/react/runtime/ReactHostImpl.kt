@@ -68,6 +68,8 @@ import com.facebook.react.runtime.internal.bolts.TaskCompletionSource
 import com.facebook.react.turbomodule.core.interfaces.CallInvokerHolder
 import com.facebook.react.uimanager.DisplayMetricsHolder
 import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.common.UIManagerType
 import com.facebook.react.uimanager.events.BlackHoleEventDispatcher
 import com.facebook.react.uimanager.events.EventDispatcher
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
@@ -745,6 +747,13 @@ public class ReactHostImpl(
 
       val appearanceModule = currentReactContext.getNativeModule(AppearanceModule::class.java)
       appearanceModule?.onConfigurationChanged(context)
+
+      // Initialize the color scheme for conditional styles (media query)
+      if (appearanceModule != null) {
+        (UIManagerHelper.getUIManager(currentReactContext, UIManagerType.FABRIC)
+                as? FabricUIManager)
+            ?.onColorSchemeChanged(appearanceModule.getColorScheme())
+      }
     }
   }
 

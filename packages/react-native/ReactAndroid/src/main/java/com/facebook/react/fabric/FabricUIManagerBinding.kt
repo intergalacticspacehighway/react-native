@@ -79,6 +79,8 @@ internal class FabricUIManagerBinding : HybridClassBase() {
 
   external fun driveCxxAnimations()
 
+  external fun onColorSchemeChanged(isDark: Boolean)
+
   external fun driveAnimationBackend(frameTimeNanos: Long)
 
   external fun drainPreallocateViewsQueue()
