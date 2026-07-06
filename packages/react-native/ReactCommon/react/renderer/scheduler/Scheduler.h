@@ -20,6 +20,7 @@
 #include <react/renderer/core/EventEmitter.h>
 #include <react/renderer/core/EventListener.h>
 #include <react/renderer/core/LayoutConstraints.h>
+#include <react/renderer/core/StyleConditionEnvironment.h>
 #include <react/renderer/mounting/MountingOverrideDelegate.h>
 #include <react/renderer/observers/events/EventPerformanceLogger.h>
 #include <react/renderer/scheduler/InspectorData.h>
@@ -52,6 +53,12 @@ class Scheduler final : public UIManagerDelegate {
    */
   void registerSurface(const SurfaceHandler &surfaceHandler) const noexcept;
   void unregisterSurface(const SurfaceHandler &surfaceHandler) const noexcept;
+
+  /*
+   * To be called by the host platform when the user interface color scheme
+   * changes. Re-resolves media-query-conditional styles in all surfaces.
+   */
+  void onColorSchemeDidChange(ColorScheme colorScheme) const;
 
   /*
    * This is broken. Please do not use.

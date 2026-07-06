@@ -12,6 +12,7 @@
 #include <react/debug/react_native_assert.h>
 #include <react/featureflags/ReactNativeFeatureFlags.h>
 #include <react/renderer/core/DynamicPropsUtilities.h>
+#include <react/renderer/core/StyleConditionEnvironment.h>
 #include <react/renderer/core/PropsParserContext.h>
 #include <react/renderer/core/ShadowNodeFragment.h>
 #include <react/renderer/uimanager/AppRegistryBinding.h>
@@ -493,6 +494,33 @@ void UIManager::setNativeProps_DEPRECATED(
                   });
 
               return std::static_pointer_cast<RootShadowNode>(rootNode);
+            },
+            {/* default commit options */});
+      });
+}
+
+void UIManager::onColorSchemeDidChange(ColorScheme colorScheme) const {
+  auto environment = StyleConditionEnvironment::get(*contextContainer_);
+  if (!environment || !environment->setColorScheme(colorScheme)) {
+    return;
+  }
+
+  // Trigger a commit only on surfaces that actually contain conditional
+  // styles. The new color scheme will be picked up by the `StyleConditionCommitHook`
+  shadowTreeRegistry_.enumerate(
+      [](const ShadowTree& shadowTree, bool& /*stop*/) {
+        auto currentRootShadowNode =
+            shadowTree.getCurrentRevision().rootShadowNode;
+        if (!currentRootShadowNode ||
+            !currentRootShadowNode->getTraits().check(
+                ShadowNodeTraits::Trait::HasStyleConditionsInSubtree)) {
+          return;
+        }
+        shadowTree.commit(
+            [](const RootShadowNode& oldRootShadowNode)
+                -> RootShadowNode::Unshared {
+              return std::static_pointer_cast<RootShadowNode>(
+                  oldRootShadowNode.ShadowNode::clone(ShadowNodeFragment{}));
             },
             {/* default commit options */});
       });

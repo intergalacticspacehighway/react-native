@@ -38,13 +38,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: {
       default: 120,
-      '@media (min-width: 500)': 300,
-      '@media (min-width: 900)': 600,
+      '@media (min-width: 500px)': 300,
+      '@media (min-width: 900px)': 600,
     },
     backgroundColor: {
       default: 'lightskyblue',
-      '@media (min-width: 500)': 'mediumseagreen',
-      '@media (min-width: 900)': 'gold',
+      '@media (min-width: 500px)': 'mediumseagreen',
+      '@media (min-width: 900px)': 'gold',
     },
   },
 });

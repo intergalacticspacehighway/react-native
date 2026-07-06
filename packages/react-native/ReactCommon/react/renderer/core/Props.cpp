@@ -7,6 +7,7 @@
 
 #include "Props.h"
 
+#include <react/renderer/core/StyleConditionData.h>
 #include <react/renderer/core/propsConversions.h>
 
 #include <react/featureflags/ReactNativeFeatureFlags.h>
@@ -30,6 +31,14 @@ Props::Props(
                     "nativeID",
                     sourceProps.nativeId,
                     {})) {
+  styleConditionData = ReactNativeFeatureFlags::enableCppPropsIteratorSetter()
+      ? sourceProps.styleConditionData
+      : convertRawProp(
+            context,
+            rawProps,
+            "styleConditions",
+            sourceProps.styleConditionData,
+            {});
 #ifdef RN_SERIALIZABLE_STATE
   if (!ReactNativeFeatureFlags::enableExclusivePropsUpdateAndroid()) {
     initializeDynamicProps(sourceProps, rawProps, filterObjectKeys);
@@ -46,6 +55,9 @@ void Props::setProp(
     case CONSTEXPR_RAW_PROPS_KEY_HASH("nativeID"):
       fromRawValue(context, value, nativeId, {});
       return;
+    case CONSTEXPR_RAW_PROPS_KEY_HASH("styleConditions"):
+      fromRawValue(context, value, styleConditionData);
+      return;
   }
 }
 
@@ -54,7 +66,8 @@ void Props::initializeDynamicProps(
     const Props& sourceProps,
     const RawProps& rawProps,
     const std::function<bool(const std::string&)>& filterObjectKeys) {
-  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
+  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid() ||
+      styleConditionData != nullptr) {
     auto& oldRawProps = sourceProps.rawProps;
     auto newRawProps = rawProps.toDynamic(filterObjectKeys);
     auto mergedRawProps = mergeDynamicProps(

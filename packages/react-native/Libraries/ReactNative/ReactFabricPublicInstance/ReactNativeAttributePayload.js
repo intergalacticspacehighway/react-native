@@ -156,6 +156,7 @@ function diffNestedProperty(
     return updatePayload;
   }
 
+  // process style conditions
   if (validAttributesAllowStyleConditions(validAttributes)) {
     const processedPrevProp = processStyleConditionsInStyleProp(prevProp);
     const processedNextProp = processStyleConditionsInStyleProp(nextProp);
@@ -224,6 +225,7 @@ function clearNestedProperty(
     return updatePayload;
   }
 
+  // process style conditions
   if (validAttributesAllowStyleConditions(validAttributes)) {
     const processedPrevProp = processStyleConditionsInStyleProp(prevProp);
     if (processedPrevProp !== prevProp) {
@@ -445,13 +447,14 @@ function addNestedProperty(
     return payload;
   }
 
+  // process style conditions
   if (validAttributesAllowStyleConditions(validAttributes)) {
     const processedProps = processStyleConditionsInStyleProp(props);
     if (processedProps !== props) {
       if (processedProps === null || typeof processedProps !== 'object') {
         return payload;
       }
-      props = processedProps as $FlowFixMe as Object;
+      props = processedProps as Object;
     }
   }
 

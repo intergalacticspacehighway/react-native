@@ -17,6 +17,7 @@
 #include <react/renderer/componentregistry/ComponentDescriptorRegistry.h>
 #include <react/renderer/core/EventQueueProcessor.h>
 #include <react/renderer/core/LayoutContext.h>
+#include <react/renderer/uimanager/StyleConditionCommitHook.h>
 #include <react/renderer/mounting/MountingOverrideDelegate.h>
 #include <react/renderer/mounting/ShadowViewMutation.h>
 #include <react/renderer/runtimescheduler/RuntimeScheduler.h>
@@ -146,9 +147,18 @@ Scheduler::Scheduler(
       std::weak_ptr<const ComponentDescriptorRegistry>(
           componentDescriptorRegistry_));
 
+  // The environment that media-query-conditional styles are evaluated
+  // against. Available to all prop parsing via `PropsParserContext`.
+  contextContainer_->erase(StyleConditionEnvironmentKey);
+  contextContainer_->insert(
+      StyleConditionEnvironmentKey, std::make_shared<StyleConditionEnvironment>());
+
   delegate_ = delegate;
   commitHooks_ = schedulerToolbox.commitHooks;
   uiManager_ = uiManager;
+
+  commitHooks_.push_back(
+      std::make_shared<StyleConditionCommitHook>(contextContainer_));
 
   for (auto& commitHook : commitHooks_) {
     uiManager->registerCommitHook(*commitHook);
@@ -259,6 +269,14 @@ void Scheduler::registerSurface(
 void Scheduler::unregisterSurface(
     const SurfaceHandler& surfaceHandler) const noexcept {
   surfaceHandler.setUIManager(nullptr);
+}
+
+#pragma mark - Media Query Environment
+
+void Scheduler::onColorSchemeDidChange(ColorScheme colorScheme) const {
+  if (uiManager_) {
+    uiManager_->onColorSchemeDidChange(colorScheme);
+  }
 }
 
 const ComponentDescriptor*
