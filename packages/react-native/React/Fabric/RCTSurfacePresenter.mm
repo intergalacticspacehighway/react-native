@@ -11,6 +11,7 @@
 #import <shared_mutex>
 #import <unordered_set>
 
+#import <React/RCTAppearance.h>
 #import <React/RCTAssert.h>
 #import <React/RCTBridge+Private.h>
 #import <React/RCTComponentViewFactory.h>
@@ -114,6 +115,11 @@ class ReactRevisionMergeRunLoopObserverDelegate final : public RunLoopObserver::
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_applicationWillTerminate)
                                                  name:UIApplicationWillTerminateNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_userInterfaceStyleDidChange:)
+                                                 name:RCTUserInterfaceStyleDidChangeNotification
                                                object:nil];
   }
 
@@ -302,6 +308,18 @@ class ReactRevisionMergeRunLoopObserverDelegate final : public RunLoopObserver::
   RCTScheduler *scheduler = [[RCTScheduler alloc] initWithToolbox:toolbox];
   scheduler.delegate = self;
 
+  // Seed the initial color scheme so conditional styles resolve against the
+  // real scheme
+  void (^seedColorScheme)(void) = ^{
+    BOOL isDarkColorScheme = [RCTColorSchemePreference(nil) isEqualToString:@"dark"];
+    [scheduler onColorSchemeDidChange:isDarkColorScheme];
+  };
+  if ([NSThread isMainThread]) {
+    seedColorScheme();
+  } else {
+    RCTExecuteOnMainQueue(seedColorScheme);
+  }
+
   return scheduler;
 }
 
@@ -328,6 +346,19 @@ class ReactRevisionMergeRunLoopObserverDelegate final : public RunLoopObserver::
 - (void)_applicationWillTerminate
 {
   [self suspend];
+}
+
+- (void)_userInterfaceStyleDidChange:(NSNotification *)notification
+{
+  RCTScheduler *scheduler = [self scheduler];
+  if (!scheduler) {
+    return;
+  }
+
+  UITraitCollection *traitCollection =
+      notification.userInfo[RCTUserInterfaceStyleDidChangeNotificationTraitCollectionKey];
+  BOOL isDarkColorScheme = [RCTColorSchemePreference(traitCollection) isEqualToString:@"dark"];
+  [scheduler onColorSchemeDidChange:isDarkColorScheme];
 }
 
 #pragma mark - RCTSchedulerDelegate

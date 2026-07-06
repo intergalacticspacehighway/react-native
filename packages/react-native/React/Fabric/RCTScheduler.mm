@@ -229,6 +229,11 @@ class RCTAnimationChoreographer : public AnimationChoreographer {
   _scheduler->reportMount(surfaceId);
 }
 
+- (void)onColorSchemeDidChange:(BOOL)isDarkColorScheme
+{
+  _scheduler->onColorSchemeDidChange(isDarkColorScheme ? ColorScheme::Dark : ColorScheme::Light);
+}
+
 - (void)dealloc
 {
   if (_animationDriver) {
