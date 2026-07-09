@@ -215,6 +215,15 @@ class ConcreteComponentDescriptor : public ComponentDescriptor {
   /*
    * Constructs a typed props object by applying `rawProps` on top of
    * `sourceProps`, via one of two paths:
+   *  - Iterator-setter (only available when `ConcreteProps` satisfies
+   *    `HasIteratorSetterCtor` AND the runtime flag is on): copy-construct
+   *    from sourceProps, then walk rawProps in-place via `forEachItem` and
+   *    route each entry through `setProp`. Skips both
+   *    `RawProps::parse(parser)` and the `folly::dynamic` materialization
+   *    that the legacy path needed.
+   *  - Classic (the fallback for any `ConcreteProps` that doesn't opt in,
+   *    and the only path when the flag is off): parse + per-field
+   *    `convertRawProp` via the 3-arg ctor.
    */
   typename ShadowNodeT::UnsharedConcreteProps parseShadowNodeProps(
       const PropsParserContext &context,
