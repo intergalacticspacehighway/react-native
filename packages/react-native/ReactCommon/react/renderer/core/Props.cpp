@@ -11,8 +11,8 @@
 #include <react/renderer/core/propsConversions.h>
 
 #include <react/featureflags/ReactNativeFeatureFlags.h>
+#include <react/renderer/core/DynamicPropsUtilities.h>
 #include <react/renderer/debug/debugStringConvertibleUtils.h>
-#include "DynamicPropsUtilities.h"
 
 namespace facebook::react {
 
@@ -22,28 +22,18 @@ Props::Props(
     const RawProps& rawProps,
     [[maybe_unused]] const std::function<bool(const std::string&)>&
         filterObjectKeys)
-    : nativeId(
-          ReactNativeFeatureFlags::enableCppPropsIteratorSetter()
-              ? sourceProps.nativeId
-              : convertRawProp(
-                    context,
-                    rawProps,
-                    "nativeID",
-                    sourceProps.nativeId,
-                    {})) {
-  styleConditionData = ReactNativeFeatureFlags::enableCppPropsIteratorSetter()
-      ? sourceProps.styleConditionData
-      : convertRawProp(
-            context,
-            rawProps,
-            "styleConditions",
-            sourceProps.styleConditionData,
-            {});
-#ifdef RN_SERIALIZABLE_STATE
-  if (!ReactNativeFeatureFlags::enableExclusivePropsUpdateAndroid()) {
-    initializeDynamicProps(sourceProps, rawProps, filterObjectKeys);
-  }
-#endif
+    : nativeId(convertRawProp(
+          context,
+          rawProps,
+          "nativeID",
+          sourceProps.nativeId,
+          {})) {
+  styleConditionData = convertRawProp(
+      context,
+      rawProps,
+      "styleConditions",
+      sourceProps.styleConditionData,
+      {});
 }
 
 void Props::setProp(
@@ -66,8 +56,7 @@ void Props::initializeDynamicProps(
     const Props& sourceProps,
     const RawProps& rawProps,
     const std::function<bool(const std::string&)>& filterObjectKeys) {
-  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid() ||
-      styleConditionData != nullptr) {
+  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
     auto& oldRawProps = sourceProps.rawProps;
     auto newRawProps = rawProps.toDynamic(filterObjectKeys);
     auto mergedRawProps = mergeDynamicProps(
