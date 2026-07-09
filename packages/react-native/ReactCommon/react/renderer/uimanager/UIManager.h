@@ -16,7 +16,6 @@
 #include <react/renderer/componentregistry/ComponentDescriptorRegistry.h>
 #include <react/renderer/consistency/ShadowTreeRevisionConsistencyManager.h>
 #include <react/renderer/core/InstanceHandle.h>
-#include <react/renderer/core/StyleConditionEnvironment.h>
 #include <react/renderer/core/RawValue.h>
 #include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/core/StateData.h>
@@ -212,12 +211,6 @@ class UIManager final : public ShadowTreeDelegate {
   const ShadowTreeRegistry &getShadowTreeRegistry() const;
 
   void reportMount(SurfaceId surfaceId) const;
-
-  /*
-   * To be called when the user interface color scheme changes. Updates the
-   * `StyleConditionEnvironment` and re-resolves media-query-conditional styles.
-   */
-  void onColorSchemeDidChange(ColorScheme colorScheme) const;
 
   void updateShadowTree(std::unordered_map<Tag, folly::dynamic> &&tagToProps);
 

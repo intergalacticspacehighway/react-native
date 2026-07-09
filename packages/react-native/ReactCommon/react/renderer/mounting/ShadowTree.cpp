@@ -227,6 +227,7 @@ ShadowTree::ShadowTree(
     SurfaceId surfaceId,
     const LayoutConstraints& layoutConstraints,
     const LayoutContext& layoutContext,
+    ColorScheme colorScheme,
     const ShadowTreeDelegate& delegate,
     const ContextContainer& contextContainer)
     : surfaceId_(surfaceId), delegate_(delegate) {
@@ -240,7 +241,8 @@ ShadowTree::ShadowTree(
       PropsParserContext{surfaceId, contextContainer},
       *RootShadowNode::defaultSharedProps(),
       layoutConstraints,
-      layoutContext);
+      layoutContext,
+      colorScheme);
 
   auto family = globalRootComponentDescriptor.createFamily(
       {.tag = surfaceId, .surfaceId = surfaceId, .instanceHandle = nullptr});

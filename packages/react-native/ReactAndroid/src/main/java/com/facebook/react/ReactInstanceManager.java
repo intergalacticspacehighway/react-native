@@ -72,7 +72,6 @@ import com.facebook.react.devsupport.interfaces.DevSupportManager;
 import com.facebook.react.devsupport.interfaces.PackagerStatusCallback;
 import com.facebook.react.devsupport.interfaces.PausedInDebuggerOverlayManager;
 import com.facebook.react.devsupport.interfaces.RedBoxHandler;
-import com.facebook.react.fabric.FabricUIManager;
 import com.facebook.react.interfaces.TaskInterface;
 import com.facebook.react.internal.AndroidChoreographerProvider;
 import com.facebook.react.internal.ChoreographerProvider;
@@ -866,11 +865,6 @@ public class ReactInstanceManager {
 
       if (appearanceModule != null) {
         appearanceModule.onConfigurationChanged(updatedContext);
-
-        UIManager uiManager = UIManagerHelper.getUIManager(currentReactContext, FABRIC);
-        if (uiManager instanceof FabricUIManager) {
-          ((FabricUIManager) uiManager).onColorSchemeChanged(appearanceModule.getColorScheme());
-        }
       }
     }
   }

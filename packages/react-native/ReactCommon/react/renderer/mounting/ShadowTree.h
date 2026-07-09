@@ -15,6 +15,7 @@
 #include <react/renderer/core/LayoutConstraints.h>
 #include <react/renderer/core/ReactPrimitives.h>
 #include <react/renderer/core/ShadowNode.h>
+#include <react/renderer/core/StyleConditionPrimitives.h>
 #include <react/renderer/mounting/MountingCoordinator.h>
 #include <react/renderer/mounting/ShadowTreeDelegate.h>
 #include <react/renderer/mounting/ShadowTreeRevision.h>
@@ -89,6 +90,7 @@ class ShadowTree final {
       SurfaceId surfaceId,
       const LayoutConstraints &layoutConstraints,
       const LayoutContext &layoutContext,
+      ColorScheme colorScheme,
       const ShadowTreeDelegate &delegate,
       const ContextContainer &contextContainer);
 

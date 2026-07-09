@@ -256,7 +256,11 @@ void ShadowNode::appendChild(const std::shared_ptr<const ShadowNode>& child) {
 
   child->family_->setParent(family_);
   propagateUncullableTraitsFromChildren();
-  propagateStyleConditionsTrait();
+
+  if (child->getTraits().check(
+          ShadowNodeTraits::Trait::HasStyleConditionsInSubtree)) {
+    traits_.set(ShadowNodeTraits::Trait::HasStyleConditionsInSubtree);
+  }
 }
 
 void ShadowNode::replaceChild(

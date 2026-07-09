@@ -14,6 +14,7 @@
 #include <react/renderer/core/LayoutConstraints.h>
 #include <react/renderer/core/LayoutContext.h>
 #include <react/renderer/core/ReactPrimitives.h>
+#include <react/renderer/core/StyleConditionPrimitives.h>
 #include <react/utils/ContextContainer.h>
 
 namespace facebook::react {
@@ -141,6 +142,15 @@ class SurfaceHandler {
   LayoutConstraints getLayoutConstraints() const noexcept;
   LayoutContext getLayoutContext() const noexcept;
 
+#pragma mark - Style conditions
+
+  /*
+   * Sets the interface color scheme conditional (`@media (prefers-color-scheme)`)
+   * styles are resolved against, committing so the `StyleConditionCommitHook`
+   * re-resolves.
+   */
+  void setColorScheme(ColorScheme colorScheme) const;
+
  private:
   friend class Scheduler;
 
@@ -174,6 +184,7 @@ class SurfaceHandler {
     folly::dynamic props{};
     LayoutConstraints layoutConstraints{};
     LayoutContext layoutContext{};
+    ColorScheme colorScheme{ColorScheme::Light};
     std::shared_ptr<const ContextContainer> contextContainer{};
   };
 

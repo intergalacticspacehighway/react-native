@@ -439,16 +439,6 @@ public class FabricUIManager
     mBinding.stopSurface(surfaceID);
   }
 
-  /**
-   * Triggers re-resolution of conditional styles when the color scheme changes.
-   */
-  public void onColorSchemeChanged(String colorScheme) {
-    if (mBinding == null) {
-      return;
-    }
-    mBinding.onColorSchemeChanged("dark".equals(colorScheme));
-  }
-
   @Override
   public void initialize() {
     mEventDispatcher.addBatchEventDispatchedListener(mBatchEventDispatchedListener);

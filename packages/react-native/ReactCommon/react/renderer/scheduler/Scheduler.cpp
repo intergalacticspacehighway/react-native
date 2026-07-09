@@ -147,18 +147,17 @@ Scheduler::Scheduler(
       std::weak_ptr<const ComponentDescriptorRegistry>(
           componentDescriptorRegistry_));
 
-  // The environment that media-query-conditional styles are evaluated
-  // against. Available to all prop parsing via `PropsParserContext`.
-  contextContainer_->erase(StyleConditionEnvironmentKey);
-  contextContainer_->insert(
-      StyleConditionEnvironmentKey, std::make_shared<StyleConditionEnvironment>());
-
   delegate_ = delegate;
   commitHooks_ = schedulerToolbox.commitHooks;
   uiManager_ = uiManager;
 
+#ifndef __ANDROID__
+  // TODO: not registered on Android yet — the serialized-rawProps path can't
+  // revert a resolved value cleanly, needs typed prop diffing (Props 2.0).
+  // Android renders the default value from conditional styles until then.
   commitHooks_.push_back(
       std::make_shared<StyleConditionCommitHook>(contextContainer_));
+#endif
 
   for (auto& commitHook : commitHooks_) {
     uiManager->registerCommitHook(*commitHook);
@@ -269,14 +268,6 @@ void Scheduler::registerSurface(
 void Scheduler::unregisterSurface(
     const SurfaceHandler& surfaceHandler) const noexcept {
   surfaceHandler.setUIManager(nullptr);
-}
-
-#pragma mark - Media Query Environment
-
-void Scheduler::onColorSchemeDidChange(ColorScheme colorScheme) const {
-  if (uiManager_) {
-    uiManager_->onColorSchemeDidChange(colorScheme);
-  }
 }
 
 const ComponentDescriptor*

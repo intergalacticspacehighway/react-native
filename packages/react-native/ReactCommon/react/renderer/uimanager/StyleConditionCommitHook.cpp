@@ -103,11 +103,6 @@ RootShadowNode::Unshared StyleConditionCommitHook::shadowTreeWillCommit(
     const RootShadowNode::Shared& /*oldRootShadowNode*/,
     const RootShadowNode::Unshared& newRootShadowNode,
     const ShadowTreeCommitOptions& /*commitOptions*/) noexcept {
-  auto environment = StyleConditionEnvironment::get(*contextContainer_);
-  if (!environment) {
-    return newRootShadowNode;
-  }
-
   // Skip the whole tree when it contains no conditional styles.
   if (!newRootShadowNode->getTraits().check(
           ShadowNodeTraits::Trait::HasStyleConditionsInSubtree)) {
@@ -115,7 +110,7 @@ RootShadowNode::Unshared StyleConditionCommitHook::shadowTreeWillCommit(
   }
 
   auto surfaceId = shadowTree.getSurfaceId();
-  auto colorScheme = environment->getColorScheme();
+  auto colorScheme = newRootShadowNode->getConcreteProps().colorScheme;
   auto orientation = orientationOf(*newRootShadowNode);
   PropsParserContext propsParserContext{surfaceId, *contextContainer_};
 

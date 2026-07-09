@@ -8,7 +8,6 @@
 #pragma once
 
 #include <react/renderer/core/StyleConditionData.h>
-#include <react/renderer/core/StyleConditionEnvironment.h>
 #include <react/renderer/core/PropsParserContext.h>
 #include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/uimanager/UIManagerCommitHook.h>
