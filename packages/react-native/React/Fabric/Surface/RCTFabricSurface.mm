@@ -9,7 +9,6 @@
 
 #import <mutex>
 
-#import <React/RCTAppearance.h>
 #import <React/RCTAssert.h>
 #import <React/RCTConstants.h>
 #import <React/RCTConversions.h>
@@ -140,7 +139,9 @@ using namespace facebook::react;
 - (void)updateColorSchemeWithTraitCollection:(UITraitCollection *)traitCollection
 {
   RCTAssertMainQueue();
-  BOOL isDark = [RCTColorSchemePreference(traitCollection) isEqualToString:@"dark"];
+  UITraitCollection *effectiveTraitCollection =
+      traitCollection ?: UITraitCollection.currentTraitCollection;
+  BOOL isDark = effectiveTraitCollection.userInterfaceStyle == UIUserInterfaceStyleDark;
   _surfaceHandler->setColorScheme(isDark ? ColorScheme::Dark : ColorScheme::Light);
 }
 

@@ -12,12 +12,16 @@ import type {RNTesterModuleExample} from '../../types/RNTesterTypes';
 
 import RNTesterText from '../../components/RNTesterText';
 import * as React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {Appearance, Button, StyleSheet, View} from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     padding: 10,
     gap: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   colorSchemeBox: {
     width: 160,
@@ -56,8 +60,8 @@ exports.examples = [
     title: 'prefers-color-scheme',
     name: 'media-query-color-scheme',
     description:
-      'Toggle the system appearance: the colors update natively without a ' +
-      'React render.',
+      'Toggle the appearance with the buttons (Appearance.setColorScheme) or ' +
+      'change it system-wide: the colors update natively without a React render.',
     render(): React.Node {
       return (
         <View style={styles.container}>
@@ -65,6 +69,20 @@ exports.examples = [
             testID="media-query-color-scheme"
             style={styles.colorSchemeBox}
           />
+          <View style={styles.buttonRow}>
+            <Button
+              title="Light"
+              onPress={() => Appearance.setColorScheme('light')}
+            />
+            <Button
+              title="Dark"
+              onPress={() => Appearance.setColorScheme('dark')}
+            />
+            <Button
+              title="System"
+              onPress={() => Appearance.setColorScheme('unspecified')}
+            />
+          </View>
         </View>
       );
     },

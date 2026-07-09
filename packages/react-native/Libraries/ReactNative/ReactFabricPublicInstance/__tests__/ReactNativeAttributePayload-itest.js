@@ -12,9 +12,9 @@ import '@react-native/fantom/src/setUpDefaultReactNativeEnvironment';
 
 import type {AttributeConfiguration} from '../../../Renderer/shims/ReactNativeTypes';
 
-const {create, diff} = require('../ReactNativeAttributePayload');
 const ReactNativeStyleAttributes =
   require('../../../Components/View/ReactNativeStyleAttributes').default;
+const {create, diff} = require('../ReactNativeAttributePayload');
 
 describe('ReactNativeAttributePayload.create', () => {
   it('should work with simple example', () => {

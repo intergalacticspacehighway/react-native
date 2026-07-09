@@ -1107,7 +1107,13 @@ export type ____DangerouslyImpreciseStyleProp_Internal = StyleProp<
 >;
 
 export type ____DangerouslyImpreciseAnimatedStyleProp_Internal =
-  WithAnimatedValue<StyleProp<Partial<____DangerouslyImpreciseStyle_Internal>>>;
+  WithAnimatedValue<
+    StyleProp<
+      ____WithConditionalValues_Internal<
+        Partial<____DangerouslyImpreciseStyle_Internal>,
+      >,
+    >,
+  >;
 
 export type ____ViewStyleProp_Internal = StyleProp<
   ____WithConditionalValues_Internal<Readonly<Partial<____ViewStyle_Internal>>>,
@@ -1131,6 +1137,15 @@ export type ____ConditionalStyleValue_Internal<out T> = Readonly<{
 // Widens each property of a style object to also accept a conditional value.
 type ____WithConditionalValues_Internal<out T> = {
   [K in keyof T]: T[K] | ____ConditionalStyleValue_Internal<T[K]>,
+};
+
+// Inverse of `____WithConditionalValues_Internal`: narrows each property back
+// to its base type. Conditional values are resolved natively, so a *flattened*
+// style presents its resolved (base) type to JS consumers.
+type ____ResolveConditionalValue_Internal<V> =
+  V extends ____ConditionalStyleValue_Internal<infer U> ? U : V;
+type ____ResolveConditionalValues_Internal<out T> = {
+  [K in keyof T]: ____ResolveConditionalValue_Internal<T[K]>,
 };
 
 export type ____Styles_Internal = {
@@ -1164,4 +1179,6 @@ export type ____FlattenStyleProp_Internal<
 > =
   ____FlattenStyleProp_Helper<TStyleProp> extends empty // $FlowFixMe[unclear-type]
     ? any
-    : ____FlattenStyleProp_Helper<TStyleProp>;
+    : ____ResolveConditionalValues_Internal<
+        ____FlattenStyleProp_Helper<TStyleProp>,
+      >;
