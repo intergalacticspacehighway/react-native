@@ -9,7 +9,6 @@
 
 #include <cxxreact/TraceSection.h>
 #include <react/debug/react_native_assert.h>
-#include <react/renderer/core/StyleConditionEnvironment.h>
 #include <react/renderer/uimanager/UIManager.h>
 
 namespace facebook::react {
@@ -53,16 +52,6 @@ void SurfaceHandler::start() const noexcept {
     parameters = parameters_;
   }
 
-  if (auto environment =
-          StyleConditionEnvironment::get(*parameters.contextContainer)) {
-    environment->setSurfaceSize(
-        parameters.surfaceId,
-        {.width =
-             static_cast<float>(parameters.layoutConstraints.maximumSize.width),
-         .height = static_cast<float>(
-             parameters.layoutConstraints.maximumSize.height)});
-  }
-
   auto shadowTree = std::make_unique<ShadowTree>(
       parameters.surfaceId,
       parameters.layoutConstraints,
@@ -97,13 +86,6 @@ void SurfaceHandler::stop() const noexcept {
     link_.status = Status::Registered;
     link_.shadowTree = nullptr;
     shadowTree = link_.uiManager->stopSurface(parameters_.surfaceId);
-
-    if (parameters_.contextContainer) {
-      if (auto environment =
-              StyleConditionEnvironment::get(*parameters_.contextContainer)) {
-        environment->clearSurface(parameters_.surfaceId);
-      }
-    }
   }
 
   // As part of stopping a Surface, we need to properly destroy all
@@ -255,15 +237,6 @@ void SurfaceHandler::constraintLayout(
 
     PropsParserContext propsParserContext{
         parameters_.surfaceId, *parameters_.contextContainer};
-
-    // Update the surface size before committing. So StyleConditionCommitHook can re-resolve conditional props with the new surface size.
-    if (auto environment =
-            StyleConditionEnvironment::get(*parameters_.contextContainer)) {
-      environment->setSurfaceSize(
-          parameters_.surfaceId,
-          {.width = static_cast<float>(layoutConstraints.maximumSize.width),
-           .height = static_cast<float>(layoutConstraints.maximumSize.height)});
-    }
 
     react_native_assert(
         link_.shadowTree && "`link_.shadowTree` must not be null.");

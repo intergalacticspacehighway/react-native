@@ -5,8 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include <limits>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,8 +14,6 @@
 #include <react/renderer/core/RawValue.h>
 #include <react/renderer/core/StyleConditionData.h>
 #include <react/renderer/core/StyleConditionPrimitives.h>
-#include <react/renderer/graphics/Float.h>
-#include <react/renderer/graphics/Size.h>
 #include <react/utils/ContextContainer.h>
 
 using namespace facebook::react;
@@ -45,40 +41,23 @@ TEST(StyleConditionDataTest, colorSchemeMatchesAndMismatches) {
       {cond(MediaQueryCondition{.colorScheme = ColorScheme::Dark}, "black")})};
 
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, std::nullopt),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Portrait),
       (StyleConditionResolution{0}));
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, std::nullopt),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Portrait),
       (StyleConditionResolution{kNoMatchingCondition}));
 }
 
-TEST(StyleConditionDataTest, minWidthBoundaryIsInclusive) {
-  std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 600}, 300)})};
+TEST(StyleConditionDataTest, orientationMatchesAndMismatches) {
+  std::vector<StyleConditionProp> props = {prop(
+      "width",
+      {cond(MediaQueryCondition{.orientation = Orientation::Landscape}, 300)})};
 
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{599, 1000}),
-      (StyleConditionResolution{kNoMatchingCondition}));
-  EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{600, 1000}),
-      (StyleConditionResolution{0})); // `>=` is inclusive
-  EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{601, 1000}),
-      (StyleConditionResolution{0}));
-}
-
-TEST(StyleConditionDataTest, maxWidthBoundaryIsInclusive) {
-  std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.maxWidth = 600}, 300)})};
-
-  EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{599, 1000}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Landscape),
       (StyleConditionResolution{0}));
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{600, 1000}),
-      (StyleConditionResolution{0})); // `<=` is inclusive
-  EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{601, 1000}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Portrait),
       (StyleConditionResolution{kNoMatchingCondition}));
 }
 
@@ -87,96 +66,82 @@ TEST(StyleConditionDataTest, andSemanticsRequireEveryField) {
       "width",
       {cond(
           MediaQueryCondition{
-              .minWidth = 600, .colorScheme = ColorScheme::Dark},
+              .colorScheme = ColorScheme::Dark,
+              .orientation = Orientation::Landscape},
           300)})};
 
   // Both hold.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, Size{700, 100}),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Landscape),
       (StyleConditionResolution{0}));
-  // Width holds, scheme wrong.
+  // Orientation holds, scheme wrong.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{700, 100}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Landscape),
       (StyleConditionResolution{kNoMatchingCondition}));
-  // Scheme holds, width too small.
+  // Scheme holds, orientation wrong.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, Size{500, 100}),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Portrait),
       (StyleConditionResolution{kNoMatchingCondition}));
 }
 
-TEST(StyleConditionDataTest, colorSchemeOnlyQueryIgnoresMissingSize) {
+TEST(StyleConditionDataTest, colorSchemeOnlyQueryIgnoresOrientation) {
   std::vector<StyleConditionProp> props = {prop(
       "backgroundColor",
       {cond(MediaQueryCondition{.colorScheme = ColorScheme::Dark}, "black")})};
 
-  // No dimension queried, so a missing surface size still matches.
+  // Orientation is not queried, so it does not affect the match.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, std::nullopt),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Portrait),
       (StyleConditionResolution{0}));
-}
-
-TEST(StyleConditionDataTest, dimensionQueryWithoutSurfaceSizeDoesNotMatch) {
-  std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 600}, 300)})};
-
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, std::nullopt),
-      (StyleConditionResolution{kNoMatchingCondition}));
-}
-
-TEST(StyleConditionDataTest, nonFiniteDimensionDoesNotMatch) {
-  std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 100}, 300)})};
-  auto infinity = std::numeric_limits<Float>::infinity();
-
-  // A flexible/unconstrained width reports infinity; a dimension query on that
-  // axis must not match (rather than every `min-*` matching).
-  EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{infinity, 500}),
-      (StyleConditionResolution{kNoMatchingCondition}));
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Landscape),
+      (StyleConditionResolution{0}));
 }
 
 TEST(StyleConditionDataTest, lastMatchingConditionWins) {
   std::vector<StyleConditionProp> props = {prop(
       "width",
-      {cond(MediaQueryCondition{.minWidth = 500}, 300),
-       cond(MediaQueryCondition{.minWidth = 900}, 600)})};
+      {cond(MediaQueryCondition{.orientation = Orientation::Landscape}, 300),
+       cond(MediaQueryCondition{.colorScheme = ColorScheme::Dark}, 600)})};
 
   // Only the first condition matches.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{700, 100}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Landscape),
       (StyleConditionResolution{0}));
   // Both match -> the later condition (index 1) wins.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{1000, 100}),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Landscape),
       (StyleConditionResolution{1}));
   // Neither matches -> default.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{300, 100}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Portrait),
       (StyleConditionResolution{kNoMatchingCondition}));
 }
 
 TEST(StyleConditionDataTest, multiplePropertiesResolveIndependently) {
   std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 600}, 300)}),
+      prop(
+          "width",
+          {cond(
+              MediaQueryCondition{.orientation = Orientation::Landscape}, 300)}),
       prop(
           "backgroundColor",
           {cond(
               MediaQueryCondition{.colorScheme = ColorScheme::Dark},
               "black")})};
 
-  // Wide + dark: both.
+  // Landscape + dark: both.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, Size{700, 100}),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Landscape),
       (StyleConditionResolution{0, 0}));
-  // Narrow + light: neither.
+  // Portrait + light: neither.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Light, Size{500, 100}),
+      evaluateStyleConditions(props, ColorScheme::Light, Orientation::Portrait),
       (StyleConditionResolution{
           kNoMatchingCondition, kNoMatchingCondition}));
-  // Narrow + dark: only backgroundColor.
+  // Portrait + dark: only backgroundColor.
   EXPECT_EQ(
-      evaluateStyleConditions(props, ColorScheme::Dark, Size{500, 100}),
+      evaluateStyleConditions(props, ColorScheme::Dark, Orientation::Portrait),
       (StyleConditionResolution{kNoMatchingCondition, 0}));
 }
 
@@ -194,7 +159,10 @@ TEST(StyleConditionDataTest, anyConditionMatches) {
 
 TEST(StyleConditionDataTest, buildStyleConditionPatchEmitsMatchedValuesOnly) {
   std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 600}, 300)}),
+      prop(
+          "width",
+          {cond(
+              MediaQueryCondition{.orientation = Orientation::Landscape}, 300)}),
       prop(
           "backgroundColor",
           {cond(
@@ -212,8 +180,9 @@ TEST(StyleConditionDataTest, buildStyleConditionPatchEmitsMatchedValuesOnly) {
 }
 
 TEST(StyleConditionDataTest, buildStyleConditionPatchIsEmptyWhenNothingMatches) {
-  std::vector<StyleConditionProp> props = {
-      prop("width", {cond(MediaQueryCondition{.minWidth = 600}, 300)})};
+  std::vector<StyleConditionProp> props = {prop(
+      "width",
+      {cond(MediaQueryCondition{.orientation = Orientation::Landscape}, 300)})};
 
   auto patch = buildStyleConditionPatch(
       props, StyleConditionResolution{kNoMatchingCondition});
@@ -228,12 +197,12 @@ TEST(StyleConditionDataTest, fromRawValueParsesTheWireFormat) {
   ContextContainer contextContainer{};
   PropsParserContext parserContext{-1, contextContainer};
 
-  // {width: [{query: {minWidth: 600}, value: 300}]}
+  // {width: [{query: {orientation: "landscape"}, value: 300}]}
   auto dynamic = folly::dynamic::object(
       "width",
-      folly::dynamic::array(
-          folly::dynamic::object(
-              "query", folly::dynamic::object("minWidth", 600))("value", 300)));
+      folly::dynamic::array(folly::dynamic::object(
+          "query",
+          folly::dynamic::object("orientation", "landscape"))("value", 300)));
 
   std::shared_ptr<const StyleConditionData> data;
   fromRawValue(parserContext, RawValue(std::move(dynamic)), data);
@@ -245,8 +214,8 @@ TEST(StyleConditionDataTest, fromRawValueParsesTheWireFormat) {
   const auto& parsed = (*data->styleConditionProps)[0];
   EXPECT_EQ(parsed.property, "width");
   ASSERT_EQ(parsed.conditions.size(), 1u);
-  ASSERT_TRUE(parsed.conditions[0].query.minWidth.has_value());
-  EXPECT_FLOAT_EQ(*parsed.conditions[0].query.minWidth, 600.0f);
+  ASSERT_TRUE(parsed.conditions[0].query.orientation.has_value());
+  EXPECT_EQ(*parsed.conditions[0].query.orientation, Orientation::Landscape);
   EXPECT_EQ(parsed.conditions[0].value, folly::dynamic(300));
 
   // Freshly parsed props carry an all-default resolution and no unpatched base.
@@ -264,9 +233,12 @@ TEST(StyleConditionDataTest, fromRawValuePreservesConditionOrder) {
       "width",
       folly::dynamic::array(
           folly::dynamic::object(
-              "query", folly::dynamic::object("minWidth", 500))("value", 300),
+              "query",
+              folly::dynamic::object("orientation", "portrait"))("value", 300),
           folly::dynamic::object(
-              "query", folly::dynamic::object("minWidth", 900))("value", 600)));
+              "query",
+              folly::dynamic::object("orientation", "landscape"))(
+              "value", 600)));
 
   std::shared_ptr<const StyleConditionData> data;
   fromRawValue(parserContext, RawValue(std::move(dynamic)), data);
@@ -275,8 +247,8 @@ TEST(StyleConditionDataTest, fromRawValuePreservesConditionOrder) {
   ASSERT_EQ(data->styleConditionProps->size(), 1u);
   const auto& conditions = (*data->styleConditionProps)[0].conditions;
   ASSERT_EQ(conditions.size(), 2u);
-  EXPECT_FLOAT_EQ(*conditions[0].query.minWidth, 500.0f);
-  EXPECT_FLOAT_EQ(*conditions[1].query.minWidth, 900.0f);
+  EXPECT_EQ(*conditions[0].query.orientation, Orientation::Portrait);
+  EXPECT_EQ(*conditions[1].query.orientation, Orientation::Landscape);
 }
 
 TEST(StyleConditionDataTest, fromRawValueIsNullForNonObject) {

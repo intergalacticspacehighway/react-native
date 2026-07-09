@@ -18,42 +18,13 @@ import processStyleConditions, {
 } from '../processStyleConditions';
 
 describe('parseMediaQueryString', () => {
-  it('should parse a single condition', () => {
-    expect(parseMediaQueryString('(min-width: 600px)')).toEqual({minWidth: 600});
-  });
-
-  it('should parse values with a px suffix', () => {
-    expect(parseMediaQueryString('(max-width: 1024px)')).toEqual({
-      maxWidth: 1024,
+  it('should parse orientation', () => {
+    expect(parseMediaQueryString('(orientation: portrait)')).toEqual({
+      orientation: 'portrait',
     });
-  });
-
-  it('should parse fractional values', () => {
-    expect(parseMediaQueryString('(min-height: 600.5px)')).toEqual({
-      minHeight: 600.5,
+    expect(parseMediaQueryString('(orientation: landscape)')).toEqual({
+      orientation: 'landscape',
     });
-  });
-
-  it('should accept an optional leading @media', () => {
-    expect(parseMediaQueryString('@media (min-width: 600px)')).toEqual({
-      minWidth: 600,
-    });
-  });
-
-  it('should parse conditions joined by and', () => {
-    expect(
-      parseMediaQueryString(
-        '@media (min-width: 600px) and (prefers-color-scheme: dark)',
-      ),
-    ).toEqual({minWidth: 600, colorScheme: 'dark'});
-    expect(
-      parseMediaQueryString('(min-width: 320px) and (max-height: 700px)'),
-    ).toEqual({minWidth: 320, maxHeight: 700});
-    expect(
-      parseMediaQueryString(
-        '(min-width: 100px) and (max-width: 200px) and (min-height: 50px)',
-      ),
-    ).toEqual({minWidth: 100, maxWidth: 200, minHeight: 50});
   });
 
   it('should parse prefers-color-scheme', () => {
@@ -65,50 +36,51 @@ describe('parseMediaQueryString', () => {
     });
   });
 
+  it('should accept an optional leading @media', () => {
+    expect(parseMediaQueryString('@media (orientation: landscape)')).toEqual({
+      orientation: 'landscape',
+    });
+  });
+
+  it('should parse conditions joined by and', () => {
+    expect(
+      parseMediaQueryString(
+        '@media (orientation: landscape) and (prefers-color-scheme: dark)',
+      ),
+    ).toEqual({orientation: 'landscape', colorScheme: 'dark'});
+  });
+
   it('should be case-insensitive (CSS media queries are)', () => {
     expect(
       parseMediaQueryString(
-        '@MEDIA (min-width: 600PX) AND (prefers-color-scheme: DARK)',
+        '@MEDIA (ORIENTATION: LANDSCAPE) AND (prefers-color-scheme: DARK)',
       ),
-    ).toEqual({minWidth: 600, colorScheme: 'dark'});
+    ).toEqual({orientation: 'landscape', colorScheme: 'dark'});
     expect(parseMediaQueryString('(prefers-color-scheme: Light)')).toEqual({
       colorScheme: 'light',
-    });
-    expect(parseMediaQueryString('(MAX-WIDTH: 1024Px)')).toEqual({
-      maxWidth: 1024,
     });
   });
 
   it('should be whitespace tolerant', () => {
     expect(
       parseMediaQueryString(
-        '  @media   ( min-width :  600px )   and   ( max-height: 700px )  ',
+        '  @media   ( orientation :  landscape )   and   ( prefers-color-scheme: dark )  ',
       ),
-    ).toEqual({minWidth: 600, maxHeight: 700});
+    ).toEqual({orientation: 'landscape', colorScheme: 'dark'});
   });
 
   it('should reject unknown features', () => {
-    expect(parseMediaQueryString('(foo: 600)')).toBe(null);
+    expect(parseMediaQueryString('(foo: bar)')).toBe(null);
   });
 
-  it('should reject exact width/height features (unsupported)', () => {
+  it('should reject dimension features (unsupported)', () => {
+    expect(parseMediaQueryString('(min-width: 600px)')).toBe(null);
+    expect(parseMediaQueryString('(max-height: 700px)')).toBe(null);
     expect(parseMediaQueryString('(width: 320)')).toBe(null);
-    expect(parseMediaQueryString('(height: 700)')).toBe(null);
   });
 
-  it('should reject unknown units', () => {
-    expect(parseMediaQueryString('(min-width: 600em)')).toBe(null);
-    expect(parseMediaQueryString('(min-width: 50%)')).toBe(null);
-  });
-
-  it('should require a unit for non-zero lengths (0 may be unitless)', () => {
-    expect(parseMediaQueryString('(min-width: 100)')).toBe(null);
-    expect(parseMediaQueryString('(min-width: 100px)')).toEqual({minWidth: 100});
-    expect(parseMediaQueryString('(min-width: 0)')).toEqual({minWidth: 0});
-  });
-
-  it('should reject non-numeric dimension values', () => {
-    expect(parseMediaQueryString('(min-width: abc)')).toBe(null);
+  it('should reject invalid orientation values', () => {
+    expect(parseMediaQueryString('(orientation: sideways)')).toBe(null);
   });
 
   it('should reject invalid color schemes', () => {
@@ -118,25 +90,30 @@ describe('parseMediaQueryString', () => {
   it('should reject invalid syntax', () => {
     expect(parseMediaQueryString('')).toBe(null);
     expect(parseMediaQueryString('@media')).toBe(null);
-    expect(parseMediaQueryString('min-width: 600')).toBe(null);
-    expect(parseMediaQueryString('(min-width: 600px) or (max-width: 700px)')).toBe(
-      null,
-    );
-    expect(parseMediaQueryString('(min-width: 600px) and')).toBe(null);
-    expect(parseMediaQueryString('(min-width: 600px) (max-width: 700px)')).toBe(
-      null,
-    );
+    expect(parseMediaQueryString('orientation: landscape')).toBe(null);
+    expect(
+      parseMediaQueryString(
+        '(orientation: landscape) or (prefers-color-scheme: dark)',
+      ),
+    ).toBe(null);
+    expect(parseMediaQueryString('(orientation: landscape) and')).toBe(null);
+    expect(
+      parseMediaQueryString('(orientation: portrait) (orientation: landscape)'),
+    ).toBe(null);
   });
 });
 
 describe('looksLikeStyleConditionValue', () => {
   it('should detect objects with @media keys', () => {
     expect(
-      looksLikeStyleConditionValue({default: 1, '@media (min-width: 600px)': 2}),
+      looksLikeStyleConditionValue({
+        default: 1,
+        '@media (orientation: landscape)': 2,
+      }),
     ).toBe(true);
-    expect(looksLikeStyleConditionValue({'@MEDIA (min-width: 600px)': 2})).toBe(
-      true,
-    );
+    expect(
+      looksLikeStyleConditionValue({'@MEDIA (orientation: landscape)': 2}),
+    ).toBe(true);
   });
 
   it('should not detect plain values and plain objects', () => {
@@ -155,16 +132,16 @@ describe('compileStyleConditionValue', () => {
       compileStyleConditionValue(
         {
           default: 100,
-          '@media (min-width: 600px)': 300,
-          '@media (min-width: 900px)': 500,
+          '@media (orientation: landscape)': 300,
+          '@media (prefers-color-scheme: dark)': 500,
         },
         'width',
       ),
     ).toEqual({
       default: 100,
       conditions: [
-        {query: {minWidth: 600}, value: 300},
-        {query: {minWidth: 900}, value: 500},
+        {query: {orientation: 'landscape'}, value: 300},
+        {query: {colorScheme: 'dark'}, value: 500},
       ],
     });
   });
@@ -186,7 +163,10 @@ describe('compileStyleConditionValue', () => {
       .spyOn(console, 'error')
       .mockImplementation(() => {});
     expect(
-      compileStyleConditionValue({'@media (min-width: 600px)': 300}, 'width'),
+      compileStyleConditionValue(
+        {'@media (orientation: landscape)': 300},
+        'width',
+      ),
     ).toBe(null);
     expect(consoleError).toHaveBeenCalledWith(
       expect.stringContaining("missing the required 'default' key"),
@@ -228,21 +208,24 @@ describe('processStyleConditions', () => {
       backgroundColor: 'red',
       width: {
         default: 100,
-        '@media (min-width: 600px)': 300,
+        '@media (orientation: landscape)': 300,
       } as $FlowFixMe,
     });
     expect(result).toEqual({
       backgroundColor: 'red',
       width: 100,
       styleConditions: {
-        width: [{query: {minWidth: 600}, value: 300}],
+        width: [{query: {orientation: 'landscape'}, value: 300}],
       },
     });
   });
 
   it('should collect one entry per conditional property, keyed by property', () => {
     const result: $FlowFixMe = processStyleConditions({
-      width: {default: 100, '@media (min-width: 600px)': 300} as $FlowFixMe,
+      width: {
+        default: 100,
+        '@media (orientation: landscape)': 300,
+      } as $FlowFixMe,
       backgroundColor: {
         default: 'red',
         '@media (prefers-color-scheme: dark)': 'black',
@@ -251,7 +234,7 @@ describe('processStyleConditions', () => {
     expect(result.width).toBe(100);
     expect(result.backgroundColor).toBe('red');
     expect(result.styleConditions).toEqual({
-      width: [{query: {minWidth: 600}, value: 300}],
+      width: [{query: {orientation: 'landscape'}, value: 300}],
       backgroundColor: [{query: {colorScheme: 'dark'}, value: 'black'}],
     });
   });
@@ -262,7 +245,7 @@ describe('processStyleConditions', () => {
       .mockImplementation(() => {});
     const result = processStyleConditions({
       backgroundColor: 'red',
-      width: {'@media (min-width: 600px)': 300} as $FlowFixMe,
+      width: {'@media (orientation: landscape)': 300} as $FlowFixMe,
     });
     expect(result).toEqual({backgroundColor: 'red'});
     consoleError.mockRestore();
@@ -284,7 +267,7 @@ describe('processStyleConditionsInStyleProp', () => {
         {
           width: {
             default: 100,
-            '@media (min-width: 600px)': 300,
+            '@media (orientation: landscape)': 300,
           } as $FlowFixMe,
           height: 40,
         },
@@ -301,14 +284,14 @@ describe('processStyleConditionsInStyleProp', () => {
         {
           width: {
             default: 100,
-            '@media (min-width: 600px)': 300,
+            '@media (orientation: landscape)': 300,
           } as $FlowFixMe,
         },
       ]),
     ).toEqual({
       width: 100,
       styleConditions: {
-        width: [{query: {minWidth: 600}, value: 300}],
+        width: [{query: {orientation: 'landscape'}, value: 300}],
       },
     });
   });
@@ -318,14 +301,14 @@ describe('processStyleConditionsProp', () => {
   it('should process each condition value with the property processor', () => {
     const styleConditions = {
       backgroundColor: [{query: {colorScheme: 'dark'}, value: 'black'}],
-      width: [{query: {minWidth: 600}, value: 300}],
+      width: [{query: {orientation: 'landscape'}, value: 300}],
     };
     expect(processStyleConditionsProp(styleConditions)).toEqual({
       backgroundColor: [
         {query: {colorScheme: 'dark'}, value: processColor('black')},
       ],
       // width has no JS processor (`true`), so its value passes through.
-      width: [{query: {minWidth: 600}, value: 300}],
+      width: [{query: {orientation: 'landscape'}, value: 300}],
     });
   });
 

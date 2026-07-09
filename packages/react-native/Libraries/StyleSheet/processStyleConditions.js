@@ -22,30 +22,11 @@ function startsWithMediaPrefix(key: string): boolean {
 
 const AND_KEYWORD_REGEX = /^and\b/i;
 const CONDITION_GROUP_REGEX = /^\(\s*([a-zA-Z-]+)\s*:\s*([^():]*?)\s*\)/;
-const LENGTH_PARSE_REGEX = /^([+-]?\d*\.?\d+)(px)?$/i;
 
 type MediaQueryCondition = Readonly<{
-  minWidth?: number,
-  maxWidth?: number,
-  minHeight?: number,
-  maxHeight?: number,
   colorScheme?: 'light' | 'dark',
+  orientation?: 'portrait' | 'landscape',
 }>;
-
-type MediaQueryDimensionKey =
-  | 'minWidth'
-  | 'maxWidth'
-  | 'minHeight'
-  | 'maxHeight';
-
-const DIMENSION_FEATURE_TO_KEY: {
-  readonly [key: string]: ?MediaQueryDimensionKey,
-} = {
-  'min-width': 'minWidth',
-  'max-width': 'maxWidth',
-  'min-height': 'minHeight',
-  'max-height': 'maxHeight',
-};
 
 export type StyleCondition = Readonly<{
   query: MediaQueryCondition,
@@ -78,11 +59,8 @@ export function parseMediaQueryString(
   }
 
   const condition: {
-    minWidth?: number,
-    maxWidth?: number,
-    minHeight?: number,
-    maxHeight?: number,
     colorScheme?: 'light' | 'dark',
+    orientation?: 'portrait' | 'landscape',
   } = {};
 
   let isFirstGroup = true;
@@ -101,29 +79,20 @@ export function parseMediaQueryString(
     }
 
     const feature = groupMatch[1].toLowerCase();
-    const rawValue = groupMatch[2];
+    const rawValue = groupMatch[2].toLowerCase();
 
     if (feature === 'prefers-color-scheme') {
-      const scheme = rawValue.toLowerCase();
-      if (scheme !== 'light' && scheme !== 'dark') {
+      if (rawValue !== 'light' && rawValue !== 'dark') {
         return null;
       }
-      condition.colorScheme = scheme;
+      condition.colorScheme = rawValue;
+    } else if (feature === 'orientation') {
+      if (rawValue !== 'portrait' && rawValue !== 'landscape') {
+        return null;
+      }
+      condition.orientation = rawValue;
     } else {
-      const key = DIMENSION_FEATURE_TO_KEY[feature];
-      if (key == null) {
-        return null;
-      }
-      const lengthMatch = LENGTH_PARSE_REGEX.exec(rawValue);
-      if (lengthMatch == null) {
-        return null;
-      }
-      const length = parseFloat(lengthMatch[1]);
-      // As in CSS, a non-zero length requires a unit; only 0 may be unitless.
-      if (lengthMatch[2] == null && length !== 0) {
-        return null;
-      }
-      condition[key] = length;
+      return null;
     }
 
     remaining = remaining.slice(groupMatch[0].length).trim();

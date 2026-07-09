@@ -11,7 +11,6 @@
 #include <react/renderer/core/PropsParserContext.h>
 #include <react/renderer/core/RawValue.h>
 #include <react/renderer/core/StyleConditionPrimitives.h>
-#include <react/renderer/graphics/Size.h>
 
 #include <cstdint>
 #include <memory>
@@ -24,11 +23,8 @@ namespace facebook::react {
 class Props;
 
 struct MediaQueryCondition {
-  std::optional<float> minWidth{};
-  std::optional<float> maxWidth{};
-  std::optional<float> minHeight{};
-  std::optional<float> maxHeight{};
   std::optional<ColorScheme> colorScheme{};
+  std::optional<Orientation> orientation{};
 
   bool operator==(const MediaQueryCondition& other) const = default;
 };
@@ -93,13 +89,14 @@ void fromRawValue(
     std::shared_ptr<const StyleConditionData>& result);
 
 /*
- * Evaluates every conditional prop against the passed colorScheme and surface size and
- * returns the per-prop resolution (last matching condition wins).
+ * Evaluates every conditional prop against the passed colorScheme and
+ * orientation and returns the per-prop resolution (last matching condition
+ * wins).
  */
 StyleConditionResolution evaluateStyleConditions(
     const std::vector<StyleConditionProp>& styleConditionProps,
     ColorScheme colorScheme,
-    const std::optional<Size>& surfaceSize);
+    Orientation orientation);
 
 /*
  * Builds a raw props patch containing the matched value of every resolved

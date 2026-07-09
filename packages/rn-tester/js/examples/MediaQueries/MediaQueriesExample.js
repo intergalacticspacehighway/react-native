@@ -33,18 +33,16 @@ const styles = StyleSheet.create({
       '@media (prefers-color-scheme: dark)': 'aquamarine',
     },
   },
-  widthBox: {
+  orientationBox: {
     height: 60,
     borderRadius: 8,
     width: {
       default: 120,
-      '@media (min-width: 500px)': 300,
-      '@media (min-width: 900px)': 600,
+      '@media (orientation: landscape)': 300,
     },
     backgroundColor: {
       default: 'lightskyblue',
-      '@media (min-width: 500px)': 'mediumseagreen',
-      '@media (min-width: 900px)': 'gold',
+      '@media (orientation: landscape)': 'mediumseagreen',
     },
   },
 });
@@ -72,18 +70,19 @@ exports.examples = [
     },
   },
   {
-    title: 'min-width',
-    name: 'media-query-min-width',
+    title: 'orientation',
+    name: 'media-query-orientation',
     description:
-      'Rotate the device or resize the window: the box resizes and changes ' +
-      'color when the surface is at least 500 or 900 points wide.',
+      'Rotate the device: the box resizes and changes color between portrait ' +
+      'and landscape, resolved natively.',
     render(): React.Node {
       return (
         <View style={styles.container}>
-          <RNTesterText>
-            blue &lt; 500dp, green ≥ 500dp, gold ≥ 900dp
-          </RNTesterText>
-          <View testID="media-query-min-width" style={styles.widthBox} />
+          <RNTesterText>blue in portrait, green in landscape</RNTesterText>
+          <View
+            testID="media-query-orientation"
+            style={styles.orientationBox}
+          />
         </View>
       );
     },

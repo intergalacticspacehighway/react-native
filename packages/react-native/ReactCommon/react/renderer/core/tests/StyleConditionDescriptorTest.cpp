@@ -23,14 +23,16 @@ namespace {
 
 // A conditional value expressed on `opacity` because it round-trips as a plain
 // public `Float` we can read straight back off the props (unlike a Yoga
-// dimension): default 1.0, becoming 0.5 while `min-width: 600` matches.
+// dimension): default 1.0, becoming 0.5 while `orientation: landscape` matches.
 folly::dynamic conditionalOpacityRawProps() {
   return folly::dynamic::object("opacity", 1.0)(
       "styleConditions",
       folly::dynamic::object(
           "opacity",
           folly::dynamic::array(folly::dynamic::object(
-              "query", folly::dynamic::object("minWidth", 600))("value", 0.5))));
+              "query",
+              folly::dynamic::object("orientation", "landscape"))(
+              "value", 0.5))));
 }
 
 } // namespace

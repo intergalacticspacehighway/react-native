@@ -18,10 +18,23 @@ import {createRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import ReactNativeElement from 'react-native/src/private/webapis/dom/nodes/ReactNativeElement';
 
+// Orientation is derived natively from the surface's viewport (landscape when it
+// is wider than tall), so the viewport passed to `createRoot` selects which
+// branch matches. (Re-resolving on a post-mount rotation is covered by the C++
+// commit-hook unit test; Fantom has no post-mount viewport resize.)
+const portraitRoot = () =>
+  Fantom.createRoot({viewportWidth: 390, viewportHeight: 844});
+const landscapeRoot = () =>
+  Fantom.createRoot({viewportWidth: 844, viewportHeight: 390});
+
 const styles = StyleSheet.create({
-  box: {
+  portraitBox: {
     height: 50,
-    width: {default: 120, '@media (min-width: 600px)': 300} as $FlowFixMe,
+    width: {default: 120, '@media (orientation: portrait)': 300} as $FlowFixMe,
+  },
+  landscapeBox: {
+    height: 50,
+    width: {default: 120, '@media (orientation: landscape)': 300} as $FlowFixMe,
   },
 });
 
@@ -30,32 +43,41 @@ function elementOf(ref: {current: HostInstance | null}): ReactNativeElement {
 }
 
 describe('StyleSheet conditional (media-query) values', () => {
-  it('resolves a min-width condition natively at mount when the surface is wide enough', () => {
+  it('resolves a matching orientation condition natively at mount', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 700, viewportHeight: 800});
+    const root = portraitRoot();
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={styles.box} />);
+      root.render(<View ref={ref} style={styles.portraitBox} />);
     });
     expect(elementOf(ref).getBoundingClientRect().width).toBe(300);
   });
 
-  it('uses the default value when the surface is below the breakpoint', () => {
+  it('resolves against a landscape viewport', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 400, viewportHeight: 800});
+    const root = landscapeRoot();
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={styles.box} />);
+      root.render(<View ref={ref} style={styles.landscapeBox} />);
+    });
+    expect(elementOf(ref).getBoundingClientRect().width).toBe(300);
+  });
+
+  it('uses the default value when the condition does not match', () => {
+    const ref = createRef<HostInstance>();
+    const root = portraitRoot();
+    Fantom.runTask(() => {
+      root.render(<View ref={ref} style={styles.landscapeBox} />);
     });
     expect(elementOf(ref).getBoundingClientRect().width).toBe(120);
   });
 
   it('resolves a conditional value nested under plain ancestor views', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 700, viewportHeight: 800});
+    const root = portraitRoot();
     Fantom.runTask(() => {
       root.render(
         <View>
           <View>
-            <View ref={ref} style={styles.box} />
+            <View ref={ref} style={styles.portraitBox} />
           </View>
         </View>,
       );
@@ -69,16 +91,18 @@ describe('StyleSheet conditional (media-query) values', () => {
 
   it('keeps the resolved value across an unrelated re-render', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 700, viewportHeight: 800});
+    const root = portraitRoot();
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={styles.box} />);
+      root.render(<View ref={ref} style={styles.portraitBox} />);
     });
     expect(elementOf(ref).getBoundingClientRect().width).toBe(300);
 
     // A re-render that only changes height must not lose the resolved width;
     // the commit hook re-applies the condition on every commit.
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={[styles.box, {height: 80}]} />);
+      root.render(
+        <View ref={ref} style={[styles.portraitBox, {height: 80}]} />,
+      );
     });
     expect(elementOf(ref).getBoundingClientRect().width).toBe(300);
     expect(elementOf(ref).getBoundingClientRect().height).toBe(80);
@@ -86,9 +110,9 @@ describe('StyleSheet conditional (media-query) values', () => {
 
   it('reverts a patched value to its default when the conditional is removed', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 700, viewportHeight: 800});
+    const root = portraitRoot();
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={styles.box} />);
+      root.render(<View ref={ref} style={styles.portraitBox} />);
     });
     expect(elementOf(ref).getBoundingClientRect().width).toBe(300); // patched
 
@@ -104,9 +128,9 @@ describe('StyleSheet conditional (media-query) values', () => {
 
   it('unmounts a conditional node cleanly', () => {
     const ref = createRef<HostInstance>();
-    const root = Fantom.createRoot({viewportWidth: 700, viewportHeight: 800});
+    const root = portraitRoot();
     Fantom.runTask(() => {
-      root.render(<View ref={ref} style={styles.box} />);
+      root.render(<View ref={ref} style={styles.portraitBox} />);
     });
     expect(ref.current).not.toBe(null);
 

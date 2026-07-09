@@ -504,12 +504,18 @@ describe('ReactNativeAttributePayload conditional (media-query) styles', () => {
   it('create: inlines the default and collects a styleConditions payload', () => {
     expect(
       create(
-        {style: {width: {default: 100, '@media (min-width: 600px)': 300}}},
+        {
+          style: {
+            width: {default: 100, '@media (orientation: landscape)': 300},
+          },
+        },
         validAttributes,
       ),
     ).toEqual({
       width: 100,
-      styleConditions: {width: [{query: {minWidth: 600}, value: 300}]},
+      styleConditions: {
+        width: [{query: {orientation: 'landscape'}, value: 300}],
+      },
     });
   });
 
@@ -551,7 +557,7 @@ describe('ReactNativeAttributePayload conditional (media-query) styles', () => {
       create(
         {
           style: [
-            {width: {default: 100, '@media (min-width: 600px)': 300}},
+            {width: {default: 100, '@media (orientation: landscape)': 300}},
             {width: 200},
           ],
         },
@@ -565,14 +571,16 @@ describe('ReactNativeAttributePayload conditional (media-query) styles', () => {
         {
           style: [
             {width: 200},
-            {width: {default: 100, '@media (min-width: 600px)': 300}},
+            {width: {default: 100, '@media (orientation: landscape)': 300}},
           ],
         },
         validAttributes,
       ),
     ).toEqual({
       width: 100,
-      styleConditions: {width: [{query: {minWidth: 600}, value: 300}]},
+      styleConditions: {
+        width: [{query: {orientation: 'landscape'}, value: 300}],
+      },
     });
   });
 
@@ -580,18 +588,28 @@ describe('ReactNativeAttributePayload conditional (media-query) styles', () => {
     expect(
       diff(
         {style: {width: 100}},
-        {style: {width: {default: 100, '@media (min-width: 600px)': 300}}},
+        {
+          style: {
+            width: {default: 100, '@media (orientation: landscape)': 300},
+          },
+        },
         validAttributes,
       ),
     ).toEqual({
-      styleConditions: {width: [{query: {minWidth: 600}, value: 300}]},
+      styleConditions: {
+        width: [{query: {orientation: 'landscape'}, value: 300}],
+      },
     });
   });
 
   it('diff: clears styleConditions (null) when the conditional value is removed', () => {
     expect(
       diff(
-        {style: {width: {default: 100, '@media (min-width: 600px)': 300}}},
+        {
+          style: {
+            width: {default: 100, '@media (orientation: landscape)': 300},
+          },
+        },
         {style: {width: 100}},
         validAttributes,
       ),
@@ -601,12 +619,22 @@ describe('ReactNativeAttributePayload conditional (media-query) styles', () => {
   it('diff: emits updated styleConditions when a condition value changes', () => {
     expect(
       diff(
-        {style: {width: {default: 100, '@media (min-width: 600px)': 300}}},
-        {style: {width: {default: 100, '@media (min-width: 600px)': 400}}},
+        {
+          style: {
+            width: {default: 100, '@media (orientation: landscape)': 300},
+          },
+        },
+        {
+          style: {
+            width: {default: 100, '@media (orientation: landscape)': 400},
+          },
+        },
         validAttributes,
       ),
     ).toEqual({
-      styleConditions: {width: [{query: {minWidth: 600}, value: 400}]},
+      styleConditions: {
+        width: [{query: {orientation: 'landscape'}, value: 400}],
+      },
     });
   });
 });

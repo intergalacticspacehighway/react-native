@@ -7,7 +7,6 @@
 
 #include "StyleConditionData.h"
 
-#include <cmath>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -16,22 +15,8 @@ namespace facebook::react {
 
 namespace {
 
-std::optional<float> readConditionValue(
-    const folly::dynamic& query,
-    const char* name) {
-  auto iterator = query.find(name);
-  if (iterator == query.items().end() || !iterator->second.isNumber()) {
-    return std::nullopt;
-  }
-  return static_cast<float>(iterator->second.asDouble());
-}
-
 MediaQueryCondition parseQuery(const folly::dynamic& rawQuery) {
   MediaQueryCondition query{};
-  query.minWidth = readConditionValue(rawQuery, "minWidth");
-  query.maxWidth = readConditionValue(rawQuery, "maxWidth");
-  query.minHeight = readConditionValue(rawQuery, "minHeight");
-  query.maxHeight = readConditionValue(rawQuery, "maxHeight");
 
   auto colorSchemeIterator = rawQuery.find("colorScheme");
   if (colorSchemeIterator != rawQuery.items().end() &&
@@ -43,33 +28,32 @@ MediaQueryCondition parseQuery(const folly::dynamic& rawQuery) {
       query.colorScheme = ColorScheme::Light;
     }
   }
+
+  auto orientationIterator = rawQuery.find("orientation");
+  if (orientationIterator != rawQuery.items().end() &&
+      orientationIterator->second.isString()) {
+    const auto& orientation = orientationIterator->second.getString();
+    if (orientation == "portrait") {
+      query.orientation = Orientation::Portrait;
+    } else if (orientation == "landscape") {
+      query.orientation = Orientation::Landscape;
+    }
+  }
+
   return query;
 }
 
 bool matchesQuery(
     const MediaQueryCondition& query,
     ColorScheme colorScheme,
-    const std::optional<Size>& surfaceSize) {
-  // Works like logical AND: all set fields must match for the query to match
-  bool hasWidth = surfaceSize.has_value() && std::isfinite(surfaceSize->width);
-  bool hasHeight =
-      surfaceSize.has_value() && std::isfinite(surfaceSize->height);
-
+    Orientation orientation) {
+  // Works like logical AND: all set fields must match for the query to match.
   bool matches = true;
   if (query.colorScheme.has_value()) {
     matches = matches && *query.colorScheme == colorScheme;
   }
-  if (query.minWidth.has_value()) {
-    matches = matches && hasWidth && surfaceSize->width >= *query.minWidth;
-  }
-  if (query.maxWidth.has_value()) {
-    matches = matches && hasWidth && surfaceSize->width <= *query.maxWidth;
-  }
-  if (query.minHeight.has_value()) {
-    matches = matches && hasHeight && surfaceSize->height >= *query.minHeight;
-  }
-  if (query.maxHeight.has_value()) {
-    matches = matches && hasHeight && surfaceSize->height <= *query.maxHeight;
+  if (query.orientation.has_value()) {
+    matches = matches && *query.orientation == orientation;
   }
   return matches;
 }
@@ -152,7 +136,7 @@ void fromRawValue(
 StyleConditionResolution evaluateStyleConditions(
     const std::vector<StyleConditionProp>& styleConditionProps,
     ColorScheme colorScheme,
-    const std::optional<Size>& surfaceSize) {
+    Orientation orientation) {
   auto resolution = StyleConditionResolution(
       styleConditionProps.size(), kNoMatchingCondition);
   for (size_t propIndex = 0; propIndex < styleConditionProps.size();
@@ -162,7 +146,7 @@ StyleConditionResolution evaluateStyleConditions(
     for (size_t conditionIndex = 0; conditionIndex < conditions.size();
          conditionIndex++) {
       if (matchesQuery(
-              conditions[conditionIndex].query, colorScheme, surfaceSize)) {
+              conditions[conditionIndex].query, colorScheme, orientation)) {
         resolution[propIndex] = static_cast<int32_t>(conditionIndex);
       }
     }

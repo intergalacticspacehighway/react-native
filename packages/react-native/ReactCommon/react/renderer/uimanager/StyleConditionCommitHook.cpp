@@ -7,19 +7,34 @@
 
 #include "StyleConditionCommitHook.h"
 
+#include <react/renderer/components/root/RootShadowNode.h>
 #include <react/renderer/core/ComponentDescriptor.h>
 #include <react/renderer/core/ShadowNodeFragment.h>
 #include <react/renderer/mounting/ShadowTree.h>
 
+#include <cmath>
 #include <utility>
 #include <vector>
 
 namespace facebook::react {
 
+namespace {
+
+// The interface orientation for `@media (orientation)` is derived from the
+// surface's own viewport (its root's maximum layout size)
+Orientation orientationOf(const RootShadowNode& rootShadowNode) {
+  auto size = rootShadowNode.getConcreteProps().layoutConstraints.maximumSize;
+  bool isLandscape = std::isfinite(size.width) && std::isfinite(size.height) &&
+      size.width > size.height;
+  return isLandscape ? Orientation::Landscape : Orientation::Portrait;
+}
+
+} // namespace
+
 std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
     const std::shared_ptr<const ShadowNode>& node,
     ColorScheme colorScheme,
-    const std::optional<Size>& surfaceSize,
+    Orientation orientation,
     const PropsParserContext& propsParserContext) {
   // Return early: a node without this trait has no conditional styles anywhere in its
   // subtree, so nothing here can re-resolve. This makes the walk cost
@@ -35,7 +50,7 @@ std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
   const auto& children = node->getChildren();
   for (size_t i = 0; i < children.size(); i++) {
     auto newChild = resolveStyleConditionsInSubtree(
-        children[i], colorScheme, surfaceSize, propsParserContext);
+        children[i], colorScheme, orientation, propsParserContext);
     if (newChild != children[i]) {
       if (newChildrenMutable == nullptr) {
         newChildrenMutable =
@@ -50,7 +65,7 @@ std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
   const auto& data = node->getProps()->styleConditionData;
   if (data && data->styleConditionProps && !data->styleConditionProps->empty()) {
     auto resolution = evaluateStyleConditions(
-        *data->styleConditionProps, colorScheme, surfaceSize);
+        *data->styleConditionProps, colorScheme, orientation);
     if (resolution != data->resolution) {
       auto resolvedProps =
           node->getComponentDescriptor().applyStyleConditionResolution(
@@ -101,11 +116,11 @@ RootShadowNode::Unshared StyleConditionCommitHook::shadowTreeWillCommit(
 
   auto surfaceId = shadowTree.getSurfaceId();
   auto colorScheme = environment->getColorScheme();
-  auto surfaceSize = environment->getSurfaceSize(surfaceId);
+  auto orientation = orientationOf(*newRootShadowNode);
   PropsParserContext propsParserContext{surfaceId, *contextContainer_};
 
   auto resolved = resolveStyleConditionsInSubtree(
-      newRootShadowNode, colorScheme, surfaceSize, propsParserContext);
+      newRootShadowNode, colorScheme, orientation, propsParserContext);
 
   if (resolved == newRootShadowNode) {
     return newRootShadowNode;

@@ -29,29 +29,4 @@ ColorScheme StyleConditionEnvironment::getColorScheme() const {
   return colorScheme_;
 }
 
-bool StyleConditionEnvironment::setSurfaceSize(SurfaceId surfaceId, Size size) {
-  std::unique_lock lock(mutex_);
-  auto iterator = surfaceSizes_.find(surfaceId);
-  if (iterator != surfaceSizes_.end() && iterator->second == size) {
-    return false;
-  }
-  surfaceSizes_[surfaceId] = size;
-  return true;
-}
-
-std::optional<Size> StyleConditionEnvironment::getSurfaceSize(
-    SurfaceId surfaceId) const {
-  std::shared_lock lock(mutex_);
-  auto iterator = surfaceSizes_.find(surfaceId);
-  if (iterator == surfaceSizes_.end()) {
-    return std::nullopt;
-  }
-  return iterator->second;
-}
-
-void StyleConditionEnvironment::clearSurface(SurfaceId surfaceId) {
-  std::unique_lock lock(mutex_);
-  surfaceSizes_.erase(surfaceId);
-}
-
 } // namespace facebook::react

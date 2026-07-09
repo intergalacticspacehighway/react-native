@@ -1116,11 +1116,13 @@ export type ____TextStyleProp_Internal = StyleProp<
   ____WithConditionalValues_Internal<Readonly<Partial<____TextStyle_Internal>>>,
 >;
 export type ____ImageStyleProp_Internal = StyleProp<
-  ____WithConditionalValues_Internal<Readonly<Partial<____ImageStyle_Internal>>>,
+  ____WithConditionalValues_Internal<
+    Readonly<Partial<____ImageStyle_Internal>>,
+  >,
 >;
 
 // A style value may be authored as a default plus media-query branches, e.g.
-// `{default: 100, '@media (min-width: 600)': 300}`, resolved natively.
+// `{default: 100, '@media (orientation: landscape)': 300}`, resolved natively.
 export type ____ConditionalStyleValue_Internal<out T> = Readonly<{
   default: T,
   [query: string]: T,

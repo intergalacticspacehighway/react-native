@@ -15,7 +15,6 @@
 #include <react/utils/ContextContainer.h>
 
 #include <memory>
-#include <optional>
 
 namespace facebook::react {
 
@@ -28,7 +27,7 @@ namespace facebook::react {
 std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
     const std::shared_ptr<const ShadowNode>& node,
     ColorScheme colorScheme,
-    const std::optional<Size>& surfaceSize,
+    Orientation orientation,
     const PropsParserContext& propsParserContext);
 
 /*

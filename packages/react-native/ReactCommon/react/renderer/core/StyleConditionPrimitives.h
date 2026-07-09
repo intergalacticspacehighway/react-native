@@ -17,6 +17,11 @@ enum class ColorScheme : uint8_t {
   Dark,
 };
 
+enum class Orientation : uint8_t {
+  Portrait,
+  Landscape,
+};
+
 /*
  * Indices of the matching conditions for each conditional prop (aligned with
  * `StyleConditionData::styleConditionProps`); `kNoMatchingCondition` means no

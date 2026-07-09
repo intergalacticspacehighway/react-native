@@ -8,15 +8,10 @@
 #pragma once
 
 #include <react/renderer/core/StyleConditionPrimitives.h>
-#include <react/renderer/core/ReactPrimitives.h>
-#include <react/renderer/graphics/Size.h>
 #include <react/utils/ContextContainer.h>
 
-#include <cstdint>
 #include <memory>
-#include <optional>
 #include <shared_mutex>
-#include <unordered_map>
 
 namespace facebook::react {
 
@@ -42,21 +37,9 @@ class StyleConditionEnvironment {
   bool setColorScheme(ColorScheme colorScheme);
   ColorScheme getColorScheme() const;
 
-  /*
-   * Returns `true` if the value changed.
-   */
-  bool setSurfaceSize(SurfaceId surfaceId, Size size);
-  std::optional<Size> getSurfaceSize(SurfaceId surfaceId) const;
-
-  /*
-   * Clears the surface size of a stopped surface.
-   */
-  void clearSurface(SurfaceId surfaceId);
-
  private:
   mutable std::shared_mutex mutex_;
   ColorScheme colorScheme_{ColorScheme::Light};
-  std::unordered_map<SurfaceId, Size> surfaceSizes_;
 };
 
 /*
