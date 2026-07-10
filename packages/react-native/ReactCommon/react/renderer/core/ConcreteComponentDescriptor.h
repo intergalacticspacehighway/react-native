@@ -124,12 +124,9 @@ class ConcreteComponentDescriptor : public ComponentDescriptor {
       ShadowNodeT::filterRawProps(rawProps);
     }
 
-    // Re-base partial prop updates onto the unpatched base props: when a node
-    // has matched conditions, its current `props` are the *patched* ones, so
-    // parsing an update over them would bake an applied conditional value in as
-    // a base value (and it would never revert, since JS doesn't re-send an
-    // unchanged property). `styleConditionData->unpatchedProps` is the clean
-    // base. For non-conditional nodes this is just `props`.
+    // Parse updates over the unpatched base, not the (possibly patched)
+    // `props`, otherwise a matched conditional value (by commit hook) would bake in as a base
+    // value and never revert, since JS never re-sends unchanged properties.
     const auto &sourceProps = props && props->styleConditionData &&
             props->styleConditionData->unpatchedProps
         ? props->styleConditionData->unpatchedProps

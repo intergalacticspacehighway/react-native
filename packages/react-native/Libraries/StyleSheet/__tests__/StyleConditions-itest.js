@@ -30,6 +30,7 @@ const landscapeRoot = () =>
 const styles = StyleSheet.create({
   portraitBox: {
     height: 50,
+    // Conditional values are not typed yet, hence the cast.
     width: {default: 120, '@media (orientation: portrait)': 300} as $FlowFixMe,
   },
   landscapeBox: {

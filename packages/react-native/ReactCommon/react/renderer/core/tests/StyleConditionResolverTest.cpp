@@ -15,7 +15,7 @@
 #include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/core/ShadowNodeFragment.h>
 #include <react/renderer/core/StyleConditionPrimitives.h>
-#include <react/renderer/uimanager/StyleConditionCommitHook.h>
+#include <react/renderer/core/StyleConditionResolver.h>
 #include <react/utils/ContextContainer.h>
 
 #include "TestComponent.h"
@@ -39,7 +39,7 @@ folly::dynamic conditionalOpacityRawProps() {
 
 } // namespace
 
-class StyleConditionCommitHookTest : public ::testing::Test {
+class StyleConditionResolverTest : public ::testing::Test {
  protected:
   SharedComponentDescriptor descriptor_ =
       std::make_shared<TestComponentDescriptor>(ComponentDescriptorParameters{
@@ -84,7 +84,7 @@ class StyleConditionCommitHookTest : public ::testing::Test {
   }
 };
 
-TEST_F(StyleConditionCommitHookTest, resolvesAMatchingConditionAgainstOrientation) {
+TEST_F(StyleConditionResolverTest, resolvesAMatchingConditionAgainstOrientation) {
   auto node = makeConditionalNode();
   ASSERT_FLOAT_EQ(opacityOf(*node), 1.0f); // unresolved default
 
@@ -93,7 +93,7 @@ TEST_F(StyleConditionCommitHookTest, resolvesAMatchingConditionAgainstOrientatio
   EXPECT_FLOAT_EQ(opacityOf(*resolved), 0.5f); // landscape -> matches
 }
 
-TEST_F(StyleConditionCommitHookTest, leavesTheNodeUntouchedWhenNothingMatches) {
+TEST_F(StyleConditionResolverTest, leavesTheNodeUntouchedWhenNothingMatches) {
   auto node = makeConditionalNode();
 
   auto resolved = resolve(node, Orientation::Portrait);
@@ -101,7 +101,7 @@ TEST_F(StyleConditionCommitHookTest, leavesTheNodeUntouchedWhenNothingMatches) {
   EXPECT_FLOAT_EQ(opacityOf(*resolved), 1.0f); // portrait -> default
 }
 
-TEST_F(StyleConditionCommitHookTest, reResolvesWhenTheEnvironmentChanges) {
+TEST_F(StyleConditionResolverTest, reResolvesWhenTheEnvironmentChanges) {
   auto node = makeConditionalNode();
   auto landscape = resolve(node, Orientation::Landscape);
   ASSERT_FLOAT_EQ(opacityOf(*landscape), 0.5f);
@@ -114,14 +114,14 @@ TEST_F(StyleConditionCommitHookTest, reResolvesWhenTheEnvironmentChanges) {
   EXPECT_FLOAT_EQ(opacityOf(*portrait), 1.0f);
 }
 
-TEST_F(StyleConditionCommitHookTest, prunesSubtreesWithoutConditions) {
+TEST_F(StyleConditionResolverTest, prunesSubtreesWithoutConditions) {
   auto node = makeNode(folly::dynamic::object("opacity", 1.0));
 
   auto resolved = resolve(node, Orientation::Landscape);
   EXPECT_EQ(resolved, node); // no trait -> returned as-is, no walk
 }
 
-TEST_F(StyleConditionCommitHookTest, resolvesAConditionalChildThroughAPlainParent) {
+TEST_F(StyleConditionResolverTest, resolvesAConditionalChildThroughAPlainParent) {
   auto child = makeConditionalNode();
   auto children =
       std::make_shared<const std::vector<std::shared_ptr<const ShadowNode>>>(

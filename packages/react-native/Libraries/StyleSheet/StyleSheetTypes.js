@@ -1101,59 +1101,26 @@ export type StyleProp<out T> =
   | ReadonlyArray<StyleProp<T>>;
 
 export type ____DangerouslyImpreciseStyleProp_Internal = StyleProp<
-  ____WithConditionalValues_Internal<
-    Partial<____DangerouslyImpreciseStyle_Internal>,
-  >,
+  Partial<____DangerouslyImpreciseStyle_Internal>,
 >;
 
 export type ____DangerouslyImpreciseAnimatedStyleProp_Internal =
-  WithAnimatedValue<
-    StyleProp<
-      ____WithConditionalValues_Internal<
-        Partial<____DangerouslyImpreciseStyle_Internal>,
-      >,
-    >,
-  >;
+  WithAnimatedValue<StyleProp<Partial<____DangerouslyImpreciseStyle_Internal>>>;
 
 export type ____ViewStyleProp_Internal = StyleProp<
-  ____WithConditionalValues_Internal<Readonly<Partial<____ViewStyle_Internal>>>,
+  Readonly<Partial<____ViewStyle_Internal>>,
 >;
 export type ____TextStyleProp_Internal = StyleProp<
-  ____WithConditionalValues_Internal<Readonly<Partial<____TextStyle_Internal>>>,
+  Readonly<Partial<____TextStyle_Internal>>,
 >;
 export type ____ImageStyleProp_Internal = StyleProp<
-  ____WithConditionalValues_Internal<
-    Readonly<Partial<____ImageStyle_Internal>>,
-  >,
+  Readonly<Partial<____ImageStyle_Internal>>,
 >;
-
-// A style value may be authored as a default plus media-query branches, e.g.
-// `{default: 100, '@media (orientation: landscape)': 300}`, resolved natively.
-export type ____ConditionalStyleValue_Internal<out T> = Readonly<{
-  default: T,
-  [query: string]: T,
-}>;
-
-// Widens each property of a style object to also accept a conditional value.
-type ____WithConditionalValues_Internal<out T> = {
-  [K in keyof T]: T[K] | ____ConditionalStyleValue_Internal<T[K]>,
-};
-
-// Inverse of `____WithConditionalValues_Internal`: narrows each property back
-// to its base type. Conditional values are resolved natively, so a *flattened*
-// style presents its resolved (base) type to JS consumers.
-type ____ResolveConditionalValue_Internal<V> =
-  V extends ____ConditionalStyleValue_Internal<infer U> ? U : V;
-type ____ResolveConditionalValues_Internal<out T> = {
-  [K in keyof T]: ____ResolveConditionalValue_Internal<T[K]>,
-};
 
 export type ____Styles_Internal = {
   // $FlowFixMe[incompatible-exact]
   // $FlowFixMe[incompatible-type]
-  readonly [key: string]: ____WithConditionalValues_Internal<
-    Partial<____DangerouslyImpreciseStyle_Internal>,
-  >,
+  readonly [key: string]: Partial<____DangerouslyImpreciseStyle_Internal>,
   ...
 };
 
@@ -1179,6 +1146,4 @@ export type ____FlattenStyleProp_Internal<
 > =
   ____FlattenStyleProp_Helper<TStyleProp> extends empty // $FlowFixMe[unclear-type]
     ? any
-    : ____ResolveConditionalValues_Internal<
-        ____FlattenStyleProp_Helper<TStyleProp>,
-      >;
+    : ____FlattenStyleProp_Helper<TStyleProp>;

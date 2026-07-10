@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include <react/renderer/core/StyleConditionData.h>
-#include <react/renderer/core/PropsParserContext.h>
-#include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/uimanager/UIManagerCommitHook.h>
 #include <react/utils/ContextContainer.h>
 
@@ -18,19 +15,10 @@
 namespace facebook::react {
 
 /*
- * Re-resolves media-query-conditional styles in the subtree rooted at `node`
- * against the given environment snapshot. Returns `node` itself
- * (pointer-equal) when nothing in the subtree changed, or a clone with
- * updated props otherwise.
- */
-std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
-    const std::shared_ptr<const ShadowNode>& node,
-    ColorScheme colorScheme,
-    Orientation orientation,
-    const PropsParserContext& propsParserContext);
-
-/*
- * Re-resolves media-query-conditional styles on commit.
+ * Re-resolves media-query-conditional styles on commit: a thin wrapper that
+ * derives the environment (color scheme and orientation) from the committed
+ * root and delegates to `resolveStyleConditionsInSubtree`
+ * (`react/renderer/core/StyleConditionResolver.h`).
  */
 class StyleConditionCommitHook : public UIManagerCommitHook {
  public:

@@ -8,13 +8,11 @@
 #include "StyleConditionCommitHook.h"
 
 #include <react/renderer/components/root/RootShadowNode.h>
-#include <react/renderer/core/ComponentDescriptor.h>
-#include <react/renderer/core/ShadowNodeFragment.h>
+#include <react/renderer/core/StyleConditionResolver.h>
 #include <react/renderer/mounting/ShadowTree.h>
 
 #include <cmath>
 #include <utility>
-#include <vector>
 
 namespace facebook::react {
 
@@ -30,69 +28,6 @@ Orientation orientationOf(const RootShadowNode& rootShadowNode) {
 }
 
 } // namespace
-
-std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
-    const std::shared_ptr<const ShadowNode>& node,
-    ColorScheme colorScheme,
-    Orientation orientation,
-    const PropsParserContext& propsParserContext) {
-  // Return early: a node without this trait has no conditional styles anywhere in its
-  // subtree, so nothing here can re-resolve. This makes the walk cost
-  // proportional to the paths reaching conditional nodes rather than the whole
-  // tree. The trait is maintained in the `ShadowNode` constructors.
-  if (!node->getTraits().check(
-          ShadowNodeTraits::Trait::HasStyleConditionsInSubtree)) {
-    return node;
-  }
-
-  std::shared_ptr<std::vector<std::shared_ptr<const ShadowNode>>>
-      newChildrenMutable = nullptr;
-  const auto& children = node->getChildren();
-  for (size_t i = 0; i < children.size(); i++) {
-    auto newChild = resolveStyleConditionsInSubtree(
-        children[i], colorScheme, orientation, propsParserContext);
-    if (newChild != children[i]) {
-      if (newChildrenMutable == nullptr) {
-        newChildrenMutable =
-            std::make_shared<std::vector<std::shared_ptr<const ShadowNode>>>(
-                children);
-      }
-      (*newChildrenMutable)[i] = std::move(newChild);
-    }
-  }
-
-  Props::Shared newProps = nullptr;
-  const auto& data = node->getProps()->styleConditionData;
-  if (data && data->styleConditionProps && !data->styleConditionProps->empty()) {
-    auto resolution = evaluateStyleConditions(
-        *data->styleConditionProps, colorScheme, orientation);
-    if (resolution != data->resolution) {
-      auto resolvedProps =
-          node->getComponentDescriptor().applyStyleConditionResolution(
-              propsParserContext, node->getProps(), resolution);
-      if (resolvedProps != node->getProps()) {
-        newProps = std::move(resolvedProps);
-      }
-    }
-  }
-
-  if (newChildrenMutable == nullptr && newProps == nullptr) {
-    return node;
-  }
-
-  auto newChildren =
-      std::shared_ptr<const std::vector<std::shared_ptr<const ShadowNode>>>(
-          newChildrenMutable);
-  return node->clone(ShadowNodeFragment{
-      .props = newProps != nullptr ? newProps
-                                   : ShadowNodeFragment::propsPlaceholder(),
-      .children = newChildren != nullptr
-          ? newChildren
-          : ShadowNodeFragment::childrenPlaceholder(),
-      // Preserve the original state of the node.
-      .state = node->getState(),
-  });
-}
 
 StyleConditionCommitHook::StyleConditionCommitHook(
     std::shared_ptr<const ContextContainer> contextContainer)

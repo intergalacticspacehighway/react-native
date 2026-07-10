@@ -139,8 +139,10 @@ using namespace facebook::react;
 - (void)updateColorSchemeWithTraitCollection:(UITraitCollection *)traitCollection
 {
   RCTAssertMainQueue();
+  // When no trait collection is provided, resolve from the
+  // key window, so the seed agrees with `useColorScheme()`
   UITraitCollection *effectiveTraitCollection =
-      traitCollection ?: UITraitCollection.currentTraitCollection;
+      traitCollection ?: RCTKeyWindow().traitCollection ?: UITraitCollection.currentTraitCollection;
   BOOL isDark = effectiveTraitCollection.userInterfaceStyle == UIUserInterfaceStyleDark;
   _surfaceHandler->setColorScheme(isDark ? ColorScheme::Dark : ColorScheme::Light);
 }

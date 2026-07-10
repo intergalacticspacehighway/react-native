@@ -27,15 +27,16 @@ const styles = StyleSheet.create({
     width: 160,
     height: 60,
     borderRadius: 8,
+    // Conditional values are not typed yet, hence the casts.
     backgroundColor: {
       default: 'pink',
       '@media (prefers-color-scheme: dark)': 'yellow',
-    },
+    } as $FlowFixMe,
     borderWidth: 2,
     borderColor: {
       default: 'peru',
       '@media (prefers-color-scheme: dark)': 'aquamarine',
-    },
+    } as $FlowFixMe,
   },
   orientationBox: {
     height: 60,
@@ -43,11 +44,11 @@ const styles = StyleSheet.create({
     width: {
       default: 120,
       '@media (orientation: landscape)': 300,
-    },
+    } as $FlowFixMe,
     backgroundColor: {
       default: 'lightskyblue',
       '@media (orientation: landscape)': 'mediumseagreen',
-    },
+    } as $FlowFixMe,
   },
 });
 

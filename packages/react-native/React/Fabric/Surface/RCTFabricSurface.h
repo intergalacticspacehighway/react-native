@@ -118,9 +118,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Applies the interface color scheme resolved from `traitCollection` (or the
- * app's current scheme when `nil`) so conditional
- * (`@media (prefers-color-scheme)`) styles re-resolve natively. Must be called
- * on the main queue.
+ * key window's scheme when `nil`, which honors `Appearance.setColorScheme`
+ * window overrides) so conditional (`@media (prefers-color-scheme)`) styles
+ * re-resolve natively. Must be called on the main queue.
  */
 - (void)updateColorSchemeWithTraitCollection:(nullable UITraitCollection *)traitCollection;
 

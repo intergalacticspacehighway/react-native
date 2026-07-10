@@ -276,7 +276,7 @@ export function processStyleConditionsInStyleProp(style: unknown): unknown {
 }
 
 // `process` for the `styleConditions` style attribute: runs each condition's
-// value through it's property processor (e.g. processColor).
+// value through its property processor (e.g. processColor).
 export function processStyleConditionsProp(value: unknown): unknown {
   if (typeof value !== 'object' || value == null || Array.isArray(value)) {
     return value;
