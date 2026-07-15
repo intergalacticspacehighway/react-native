@@ -146,8 +146,7 @@ class SurfaceHandler {
 
   /*
    * Sets the interface color scheme conditional (`@media (prefers-color-scheme)`)
-   * styles are resolved against, committing so the `StyleConditionCommitHook`
-   * re-resolves.
+   * styles are resolved against, committing so the tree re-resolves on commit.
    */
   void setColorScheme(ColorScheme colorScheme) const;
 

@@ -30,19 +30,18 @@ std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
     return node;
   }
 
-  std::shared_ptr<std::vector<std::shared_ptr<const ShadowNode>>>
-      newChildrenMutable = nullptr;
+  auto newChildren = std::vector<std::shared_ptr<const ShadowNode>>{};
+  auto areChildrenChanged = false;
   const auto& children = node->getChildren();
   for (size_t i = 0; i < children.size(); i++) {
     auto newChild = resolveStyleConditionsInSubtree(
         children[i], colorScheme, orientation, propsParserContext);
     if (newChild != children[i]) {
-      if (newChildrenMutable == nullptr) {
-        newChildrenMutable =
-            std::make_shared<std::vector<std::shared_ptr<const ShadowNode>>>(
-                children);
+      if (!areChildrenChanged) {
+        newChildren = children;
+        areChildrenChanged = true;
       }
-      (*newChildrenMutable)[i] = std::move(newChild);
+      newChildren[i] = std::move(newChild);
     }
   }
 
@@ -61,18 +60,17 @@ std::shared_ptr<const ShadowNode> resolveStyleConditionsInSubtree(
     }
   }
 
-  if (newChildrenMutable == nullptr && newProps == nullptr) {
+  if (!areChildrenChanged && newProps == nullptr) {
     return node;
   }
 
-  auto newChildren =
-      std::shared_ptr<const std::vector<std::shared_ptr<const ShadowNode>>>(
-          newChildrenMutable);
   return node->clone(ShadowNodeFragment{
       .props = newProps != nullptr ? newProps
                                    : ShadowNodeFragment::propsPlaceholder(),
-      .children = newChildren != nullptr
-          ? newChildren
+      .children = areChildrenChanged
+          ? std::make_shared<
+                const std::vector<std::shared_ptr<const ShadowNode>>>(
+                std::move(newChildren))
           : ShadowNodeFragment::childrenPlaceholder(),
       // Preserve the original state of the node.
       .state = node->getState(),

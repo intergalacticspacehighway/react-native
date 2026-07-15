@@ -17,7 +17,6 @@
 #include <react/renderer/componentregistry/ComponentDescriptorRegistry.h>
 #include <react/renderer/core/EventQueueProcessor.h>
 #include <react/renderer/core/LayoutContext.h>
-#include <react/renderer/uimanager/StyleConditionCommitHook.h>
 #include <react/renderer/mounting/MountingOverrideDelegate.h>
 #include <react/renderer/mounting/ShadowViewMutation.h>
 #include <react/renderer/runtimescheduler/RuntimeScheduler.h>
@@ -150,14 +149,6 @@ Scheduler::Scheduler(
   delegate_ = delegate;
   commitHooks_ = schedulerToolbox.commitHooks;
   uiManager_ = uiManager;
-
-#ifndef __ANDROID__
-  // TODO: not registered on Android yet — the serialized-rawProps path can't
-  // revert a resolved value cleanly, needs typed prop diffing (Props 2.0).
-  // Android renders the default value from conditional styles until then.
-  commitHooks_.push_back(
-      std::make_shared<StyleConditionCommitHook>(contextContainer_));
-#endif
 
   for (auto& commitHook : commitHooks_) {
     uiManager->registerCommitHook(*commitHook);

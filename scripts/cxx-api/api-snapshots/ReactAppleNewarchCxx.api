@@ -6883,13 +6883,6 @@ class facebook::react::StyleAnimatedNode : public facebook::react::AnimatedNode 
   public void collectViewUpdates(folly::dynamic& props);
 }
 
-class facebook::react::StyleConditionCommitHook : public facebook::react::UIManagerCommitHook {
-  public StyleConditionCommitHook(std::shared_ptr<const facebook::react::ContextContainer> contextContainer);
-  public virtual facebook::react::RootShadowNode::Unshared shadowTreeWillCommit(const facebook::react::ShadowTree& shadowTree, const facebook::react::RootShadowNode::Shared& oldRootShadowNode, const facebook::react::RootShadowNode::Unshared& newRootShadowNode, const facebook::react::ShadowTreeCommitOptions& commitOptions) noexcept override;
-  public virtual void commitHookWasRegistered(const facebook::react::UIManager&) noexcept override;
-  public virtual void commitHookWasUnregistered(const facebook::react::UIManager&) noexcept override;
-}
-
 class facebook::react::SubtractionAnimatedNode : public facebook::react::OperatorAnimatedNode {
   public SubtractionAnimatedNode(facebook::react::Tag tag, const folly::dynamic& config, facebook::react::NativeAnimatedNodesManager& manager);
   public virtual void update() override;

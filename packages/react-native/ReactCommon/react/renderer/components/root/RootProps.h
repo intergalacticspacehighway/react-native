@@ -36,7 +36,7 @@ class RootProps final : public ViewProps {
   /*
    * The interface color scheme conditional (`@media (prefers-color-scheme)`)
    * styles are resolved against. Lives on the root (like `layoutConstraints`)
-   * so the `StyleConditionCommitHook` can read it per surface.
+   * so the `ShadowTree` can read it per surface when committing.
    */
   ColorScheme colorScheme{ColorScheme::Light};
 };

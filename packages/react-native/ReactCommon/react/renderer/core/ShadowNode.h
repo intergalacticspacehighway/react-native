@@ -256,9 +256,9 @@ class ShadowNode : public Sealable, public DebugStringConvertible, public jsi::N
   /*
    * Recomputes the `HasStyleConditionsInSubtree` trait from this node's own
    * props (non-null `styleConditionData`) and its children's traits. Must run
-   * whenever props or children change so that `StyleConditionCommitHook` can prune
-   * whole subtrees and skip the whole tree at the root when no conditional
-   * styles are present.
+   * whenever props or children change so that `resolveStyleConditionsInSubtree`
+   * can prune whole subtrees and skip the whole tree at the root when no
+   * conditional styles are present.
    */
   void propagateStyleConditionsTrait();
 
