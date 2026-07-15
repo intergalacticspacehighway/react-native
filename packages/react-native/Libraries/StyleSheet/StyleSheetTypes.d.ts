@@ -502,12 +502,10 @@ export interface ViewStyle extends FlexStyle, ShadowStyleIOS, TransformsStyle {
   backgroundImage?: ReadonlyArray<BackgroundImageValue> | string | undefined;
   experimental_backgroundImage?:
     ReadonlyArray<BackgroundImageValue> | string | undefined;
-  experimental_backgroundSize?:
-    ReadonlyArray<BackgroundSizeValue> | string | undefined;
-  experimental_backgroundPosition?:
+  backgroundSize?: ReadonlyArray<BackgroundSizeValue> | string | undefined;
+  backgroundPosition?:
     ReadonlyArray<BackgroundPositionValue> | string | undefined;
-  experimental_backgroundRepeat?:
-    ReadonlyArray<BackgroundRepeatValue> | string | undefined;
+  backgroundRepeat?: ReadonlyArray<BackgroundRepeatValue> | string | undefined;
 }
 
 export type FontVariant =
