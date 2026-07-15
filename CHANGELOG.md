@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.87.0-rc.1
+
+### Breaking
+
+- React Native's default JavaScript API is now the [Strict TypeScript API](https://reactnative.dev/docs/strict-typescript-api). Use `customConditions: ["react-native-legacy-deep-imports"]` to opt out. ([c948b61c05](https://github.com/react/react-native/commit/c948b61c051a2d5cfc79925e93eb49904db972c8) by [@huntie](https://github.com/huntie))
+- The `Touchable` root export (undocumented) is removed. If you are extending `Touchable` as a type, please use `ViewProps` instead. ([6fbf3062f9](https://github.com/react/react-native/commit/6fbf3062f9085c93bcb35c6a61c76029abbc16a5) by [@huntie](https://github.com/huntie))
+- `react-native/rn-get-polyfills` is removed — please use `react-native/js-polyfills` (package) ([b6a535afee](https://github.com/react/react-native/commit/b6a535afee1e099db00e62b904e3611f41227544) by [@huntie](https://github.com/huntie))
+- `react-native/jest-preset` is removed — all projects must now migrate to `react-native/jest-preset` (package) ([9ee21ddd9b](https://github.com/react/react-native/commit/9ee21ddd9b0d6b997709786fda4bd0b67be1ec7d) by [@huntie](https://github.com/huntie))
+
+
+### Added
+
+- Deprecate `'react-native/Libraries/Core/InitializeCore'`. Use `'react-native/setup-env'` instead. ([bfa679f0ea](https://github.com/react/react-native/commit/bfa679f0ea5431c92894d236b8e414f2feb70280) by [@huntie](https://github.com/huntie))
+
+
+### Changed
+
+- Bump Metro to 0.87.0 ([0565bcdbab](https://github.com/react/react-native/commit/0565bcdbab05e2fb6208aa842721485eb89ffc7c) by [@robhogan](https://github.com/robhogan))
+
+
+### Fixed
+
+- Fix apps failing to boot ("... not registered as callable") caused by core init not running. ([08c323346b](https://github.com/react/react-native/commit/08c323346be6c0fbbd70900d48435f977a78a1bb) by [@zeyap](https://github.com/zeyap))
+
+
+
 ## v0.87.0-rc.0
 
 ### Breaking
