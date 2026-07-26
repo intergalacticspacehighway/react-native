@@ -8,13 +8,37 @@
 import SwiftUI
 import UIKit
 
+// https://stackoverflow.com/questions/70032739/why-does-swiftui-uihostingcontroller-have-extra-spacing
+// When SwiftUI view is injected in a UIKit view hierarchy, the hosting controller by default adds safe-area insets to the SwiftUI content. This makes it conflict with React Native/Yoga layout system.
+// So we need to cancel the safe-area insets that the hosting controller resolves, so that the SwiftUI content is laid out against the exact bounds React Native assigned.
+// TODO: Use `UIHostingController.safeAreaRegions = []` API` once RN supports iOS 16.4+ only.
+private final class SwiftUIContainerHostingController<Content: View>: UIHostingController<Content> {
+  override func viewSafeAreaInsetsDidChange() {
+    super.viewSafeAreaInsetsDidChange()
+
+    let resolved = view.safeAreaInsets
+    guard resolved.top != 0 || resolved.left != 0 || resolved.bottom != 0 || resolved.right != 0
+    else {
+      return
+    }
+
+    let additional = additionalSafeAreaInsets
+    additionalSafeAreaInsets = UIEdgeInsets(
+      top: additional.top - resolved.top,
+      left: additional.left - resolved.left,
+      bottom: additional.bottom - resolved.bottom,
+      right: additional.right - resolved.right)
+  }
+}
+
 @MainActor @objc public class RCTSwiftUIContainerView: NSObject {
   private var containerViewModel = ContainerViewModel()
-  private var hostingController: UIHostingController<SwiftUIContainerView>?
+  private var hostingController: SwiftUIContainerHostingController<SwiftUIContainerView>?
 
   @objc public override init() {
     super.init()
-    hostingController = UIHostingController(rootView: SwiftUIContainerView(viewModel: containerViewModel))
+    hostingController =
+      SwiftUIContainerHostingController(rootView: SwiftUIContainerView(viewModel: containerViewModel))
     guard let view = hostingController?.view else {
       return
     }
