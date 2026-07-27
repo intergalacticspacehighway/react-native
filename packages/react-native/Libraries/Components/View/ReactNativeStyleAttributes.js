@@ -201,16 +201,19 @@ const ReactNativeStyleAttributes: {[string]: AnyAttributeType, ...} = {
    * BackgroundSize
    */
   backgroundSize: backgroundSizeAttribute,
+  experimental_backgroundSize: backgroundSizeAttribute,
 
   /**
    * BackgroundPosition
    */
   backgroundPosition: backgroundPositionAttribute,
+  experimental_backgroundPosition: backgroundPositionAttribute,
 
   /**
    * BackgroundRepeat
    */
   backgroundRepeat: backgroundRepeatAttribute,
+  experimental_backgroundRepeat: backgroundRepeatAttribute,
 
   /**
    * View

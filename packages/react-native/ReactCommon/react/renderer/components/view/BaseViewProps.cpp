@@ -218,19 +218,34 @@ BaseViewProps::BaseViewProps(
           context,
           rawProps,
           "backgroundSize",
-          sourceProps.backgroundSize,
+          convertRawProp(
+              context,
+              rawProps,
+              "experimental_backgroundSize",
+              sourceProps.backgroundSize,
+              {}),
           {})),
       backgroundPosition(convertRawProp(
           context,
           rawProps,
           "backgroundPosition",
-          sourceProps.backgroundPosition,
+          convertRawProp(
+              context,
+              rawProps,
+              "experimental_backgroundPosition",
+              sourceProps.backgroundPosition,
+              {}),
           {})),
       backgroundRepeat(convertRawProp(
           context,
           rawProps,
           "backgroundRepeat",
-          sourceProps.backgroundRepeat,
+          convertRawProp(
+              context,
+              rawProps,
+              "experimental_backgroundRepeat",
+              sourceProps.backgroundRepeat,
+              {}),
           {})),
       mixBlendMode(convertRawProp(
           context,
@@ -339,8 +354,12 @@ void BaseViewProps::setProp(
     RAW_SET_PROP_SWITCH_CASE_BASIC(backgroundImage);
     RAW_SET_PROP_SWITCH_CASE(backgroundImage, "experimental_backgroundImage");
     RAW_SET_PROP_SWITCH_CASE_BASIC(backgroundSize);
+    RAW_SET_PROP_SWITCH_CASE(backgroundSize, "experimental_backgroundSize");
     RAW_SET_PROP_SWITCH_CASE_BASIC(backgroundPosition);
+    RAW_SET_PROP_SWITCH_CASE(
+        backgroundPosition, "experimental_backgroundPosition");
     RAW_SET_PROP_SWITCH_CASE_BASIC(backgroundRepeat);
+    RAW_SET_PROP_SWITCH_CASE(backgroundRepeat, "experimental_backgroundRepeat");
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowColor);
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowOffset);
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowOpacity);
