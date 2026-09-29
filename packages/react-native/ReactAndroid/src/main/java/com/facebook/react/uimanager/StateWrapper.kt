@@ -18,12 +18,11 @@ import com.facebook.react.common.mapbuffer.ReadableMapBuffer
  */
 public interface StateWrapper {
   /**
-   * Maps to EventQueue::UpdateMode in C++.
-   * Controls how state updates are flushed (Async or Sync).
+   * Maps to EventQueue::UpdateMode in C++. Controls how state updates are flushed (Async or Sync).
    */
   public enum class UpdateMode(public val value: Int) {
     Asynchronous(0),
-    unstable_Immediate(1)
+    unstable_Immediate(1),
   }
 
   /**
@@ -40,8 +39,7 @@ public interface StateWrapper {
 
   /**
    * Pass a map of values back to the C++ layer. The operation is performed synchronously and cannot
-   * fail.
-   * updateMode controls whether the update is queued asynchronously or flushed immediately.
+   * fail. updateMode controls whether the update is queued asynchronously or flushed immediately.
    */
   public fun updateState(map: WritableMap, updateMode: UpdateMode = UpdateMode.Asynchronous)
 

@@ -9,6 +9,8 @@ package com.facebook.react.fabric.mounting
 
 import com.facebook.react.fabric.mounting.MountItemDispatcher.ItemDispatchListener
 import com.facebook.react.fabric.mounting.mountitems.MountItem
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsDefaults
 import com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsForTests
 import com.facebook.react.internal.tracing.PerformanceTracer
 import com.facebook.react.uimanager.ViewManagerRegistry
@@ -54,11 +56,12 @@ class MountItemDispatcherTest {
    * item's execution synchronously updates shadow node state, it can enqueue new mount items and
    * re-enter [MountItemDispatcher.tryDispatchMountItems] while a dispatch is already in progress.
    *
-   * The re-entrant call must not drop those items: they should be flushed in the same dispatch pass,
-   * rather than being deferred to the next frame.
+   * The re-entrant call must not drop those items: they should be flushed in the same dispatch
+   * pass, rather than being deferred to the next frame.
    */
   @Test
   fun tryDispatchMountItems_reentrantDispatch_executesFollowUpItemInSamePass() {
+    enableFollowUpMountItemDispatch()
     val followUpItem = RecordingMountItem()
     // Simulates a synchronous state update triggered while the first item is being mounted: it
     // enqueues another mount item and re-enters the dispatcher.
@@ -67,7 +70,8 @@ class MountItemDispatcherTest {
             onExecute = {
               dispatcher.addMountItem(followUpItem)
               dispatcher.tryDispatchMountItems()
-            })
+            }
+        )
 
     dispatcher.addMountItem(initialItem)
     dispatcher.tryDispatchMountItems()
@@ -78,6 +82,7 @@ class MountItemDispatcherTest {
 
   @Test
   fun tryDispatchMountItems_reentrantDispatch_preservesExecutionOrder() {
+    enableFollowUpMountItemDispatch()
     val executionOrder = mutableListOf<String>()
     val followUpItem = RecordingMountItem(onExecute = { executionOrder.add("followUp") })
     val initialItem =
@@ -86,7 +91,8 @@ class MountItemDispatcherTest {
               executionOrder.add("initial")
               dispatcher.addMountItem(followUpItem)
               dispatcher.tryDispatchMountItems()
-            })
+            }
+        )
 
     dispatcher.addMountItem(initialItem)
     dispatcher.tryDispatchMountItems()
@@ -96,12 +102,14 @@ class MountItemDispatcherTest {
 
   @Test
   fun tryDispatchMountItems_reentrantDispatch_invokesDidDispatchOnceForOuterCall() {
+    enableFollowUpMountItemDispatch()
     val initialItem =
         RecordingMountItem(
             onExecute = {
               dispatcher.addMountItem(RecordingMountItem())
               dispatcher.tryDispatchMountItems()
-            })
+            }
+        )
 
     dispatcher.addMountItem(initialItem)
     dispatcher.tryDispatchMountItems()
@@ -109,6 +117,36 @@ class MountItemDispatcherTest {
     // The re-entrant call returns early and must not notify the listener; only the outer call does,
     // once, after the follow-up loop has drained everything.
     assertThat(dispatchListener.didDispatchCount).isEqualTo(1)
+  }
+
+  @Test
+  fun tryDispatchMountItems_reentrantDispatch_withFlagDisabled_defersFollowUpItem() {
+    val followUpItem = RecordingMountItem()
+    val initialItem =
+        RecordingMountItem(
+            onExecute = {
+              dispatcher.addMountItem(followUpItem)
+              dispatcher.tryDispatchMountItems()
+            }
+        )
+
+    dispatcher.addMountItem(initialItem)
+    dispatcher.tryDispatchMountItems()
+
+    assertThat(initialItem.executed).isTrue()
+    assertThat(followUpItem.executed).isFalse()
+
+    dispatcher.tryDispatchMountItems()
+
+    assertThat(followUpItem.executed).isTrue()
+  }
+
+  private fun enableFollowUpMountItemDispatch() {
+    ReactNativeFeatureFlags.override(
+        object : ReactNativeFeatureFlagsDefaults() {
+          override fun enableFollowUpMountItemDispatchAndroid(): Boolean = true
+        },
+    )
   }
 
   private class RecordingMountItem(
@@ -137,6 +175,8 @@ class MountItemDispatcherTest {
     override fun didDispatchMountItems() {
       didDispatchCount++
     }
+
+    override fun onItemsQueued() = Unit
   }
 
   // isTracing() is a native method; its JNI library isn't loaded in JVM tests, so return false and

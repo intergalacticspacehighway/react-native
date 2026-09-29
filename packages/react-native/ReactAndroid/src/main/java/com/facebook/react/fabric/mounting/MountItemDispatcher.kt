@@ -100,7 +100,9 @@ internal class MountItemDispatcher(
     // enqueued during dispatch (e.g., from synchronous state updates triggered by view layout)
     // are processed in the same frame rather than deferred to the next one.
     if (inDispatch) {
-      followUpDispatchRequired = true
+      if (ReactNativeFeatureFlags.enableFollowUpMountItemDispatchAndroid()) {
+        followUpDispatchRequired = true
+      }
       return
     }
 
