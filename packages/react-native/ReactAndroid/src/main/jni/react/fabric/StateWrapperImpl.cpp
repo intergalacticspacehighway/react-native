@@ -57,8 +57,7 @@ void StateWrapperImpl::updateStateImpl(NativeMap* map, jint updateMode) {
     auto dynamicMap = map->consume();
     // Set state
     state_->updateState(
-        std::move(dynamicMap),
-        static_cast<EventQueue::UpdateMode>(updateMode));
+        std::move(dynamicMap), static_cast<EventQueue::UpdateMode>(updateMode));
   }
 }
 
