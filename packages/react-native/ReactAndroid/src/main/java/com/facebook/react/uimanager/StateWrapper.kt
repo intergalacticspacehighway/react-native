@@ -9,6 +9,7 @@ package com.facebook.react.uimanager
 
 import com.facebook.react.bridge.ReadableNativeMap
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.common.mapbuffer.ReadableMapBuffer
 
 /**
@@ -20,6 +21,7 @@ public interface StateWrapper {
   /**
    * Maps to EventQueue::UpdateMode in C++. Controls how state updates are flushed (Async or Sync).
    */
+  @UnstableReactNativeAPI
   public enum class UpdateMode(public val value: Int) {
     Asynchronous(0),
     unstable_Immediate(1),
@@ -39,9 +41,15 @@ public interface StateWrapper {
 
   /**
    * Pass a map of values back to the C++ layer. The operation is performed synchronously and cannot
-   * fail. updateMode controls whether the update is queued asynchronously or flushed immediately.
+   * fail.
    */
-  public fun updateState(map: WritableMap, updateMode: UpdateMode = UpdateMode.Asynchronous)
+  public fun updateState(map: WritableMap)
+
+  /**
+   * Pass a map of values back to the C++ layer. updateMode controls whether the update is queued
+   * asynchronously or flushed immediately.
+   */
+  @UnstableReactNativeAPI public fun updateState(map: WritableMap, updateMode: UpdateMode)
 
   /**
    * Mark state as unused and clean up in Java and in native. This should be called as early as

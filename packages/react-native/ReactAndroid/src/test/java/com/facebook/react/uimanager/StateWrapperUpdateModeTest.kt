@@ -7,6 +7,7 @@
 
 package com.facebook.react.uimanager
 
+import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.uimanager.StateWrapper.UpdateMode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -18,6 +19,7 @@ import org.robolectric.RobolectricTestRunner
  * must match its order (Asynchronous = 0, unstable_Immediate = 1). A mismatch silently flips
  * async/sync state updates.
  */
+@OptIn(UnstableReactNativeAPI::class)
 @RunWith(RobolectricTestRunner::class)
 class StateWrapperUpdateModeTest {
 

@@ -14,6 +14,7 @@ import com.facebook.proguard.annotations.DoNotStripAny
 import com.facebook.react.bridge.NativeMap
 import com.facebook.react.bridge.ReadableNativeMap
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.common.mapbuffer.ReadableMapBuffer
 import com.facebook.react.uimanager.ReferenceStateWrapper
 import com.facebook.react.uimanager.StateWrapper
@@ -24,6 +25,7 @@ import com.facebook.react.uimanager.StateWrapper
  */
 @SuppressLint("MissingNativeLoadLibrary")
 @DoNotStripAny
+@OptIn(UnstableReactNativeAPI::class)
 internal class StateWrapperImpl private constructor() : HybridClassBase(), ReferenceStateWrapper {
 
   private external fun initHybrid()
@@ -65,6 +67,10 @@ internal class StateWrapperImpl private constructor() : HybridClassBase(), Refer
 
   init {
     initHybrid()
+  }
+
+  override fun updateState(map: WritableMap) {
+    updateState(map, StateWrapper.UpdateMode.Asynchronous)
   }
 
   override fun updateState(map: WritableMap, updateMode: StateWrapper.UpdateMode) {
