@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7928e03a82c0fd05eb5a1623959402c4>>
+ * @generated SignedSource<<3bf38507557250b7939d79afbf9a4cc1>>
  */
 
 /**
@@ -66,6 +66,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var enableMountingCoordinatorPullModelAndroidCache: Boolean? = null
   private var enableMutationObserverByDefaultCache: Boolean? = null
   private var enableNativeCSSParsingCache: Boolean? = null
+  private var enablePreallocatedPropsDiffOnInsertAndroidCache: Boolean? = null
   private var enablePreparedTextLayoutCache: Boolean? = null
   private var enablePropsUpdateReconciliationAndroidCache: Boolean? = null
   private var enableResizeObserverByDefaultCache: Boolean? = null
@@ -521,6 +522,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.enableNativeCSSParsing()
       enableNativeCSSParsingCache = cached
+    }
+    return cached
+  }
+
+  override fun enablePreallocatedPropsDiffOnInsertAndroid(): Boolean {
+    var cached = enablePreallocatedPropsDiffOnInsertAndroidCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.enablePreallocatedPropsDiffOnInsertAndroid()
+      enablePreallocatedPropsDiffOnInsertAndroidCache = cached
     }
     return cached
   }

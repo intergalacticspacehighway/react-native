@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7cd9353350b5e0d8b563f04e8ad17e7d>>
+ * @generated SignedSource<<5be7b8efeb58e760face3d0b22cb231c>>
  */
 
 /**
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <react/cxxstableapi/UmbrellaGuard.h>
+#include <react/cxxstableapi/PrivateGuard.h>
 
 #include <react/featureflags/ReactNativeFeatureFlagsProvider.h>
 
@@ -210,6 +210,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableNativeCSSParsing() override {
+    return false;
+  }
+
+  bool enablePreallocatedPropsDiffOnInsertAndroid() override {
     return false;
   }
 

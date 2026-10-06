@@ -181,6 +181,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'canary',
     },
     enableAccumulatedUpdatesInRawPropsAndroid: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2024-12-10',
@@ -233,6 +234,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enableCppPropsIteratorSetter: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2024-09-13',
@@ -287,6 +289,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enableExclusivePropsUpdateAndroid: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2025-11-11',
@@ -528,11 +531,23 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enableNativeCSSParsing: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2025-02-07',
         description:
           'Parse CSS strings using the Fabric CSS parser instead of ViewConfig processing',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
+    enablePreallocatedPropsDiffOnInsertAndroid: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-09-30',
+        description:
+          'When enabled together with `enableAccumulatedUpdatesInRawPropsAndroid`, the Insert of a preallocated view only sends the difference between the props the view was preallocated with and the inserted props, instead of sending all props again on every Insert.',
         expectedReleaseValue: true,
         purpose: 'experimentation',
       },
@@ -549,6 +564,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enablePropsUpdateReconciliationAndroid: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2024-07-12',
@@ -934,6 +950,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     useSharedAnimatedBackend: {
+      dangerouslyExposeInPublicCppHeaders: true,
       defaultValue: false,
       metadata: {
         dateAdded: '2025-08-02',

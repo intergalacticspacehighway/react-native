@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<eaf2cc291577af092877c182e24e7c2b>>
+ * @generated SignedSource<<36e9fb622c0e8f6cabbe335c85547f2e>>
  */
 
 /**
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <react/cxxstableapi/UmbrellaGuard.h>
+#include <react/cxxstableapi/PrivateGuard.h>
 
 #include <react/featureflags/ReactNativeFeatureFlagsAccessor.h>
 #include <react/featureflags/ReactNativeFeatureFlagsProvider.h>
@@ -270,6 +270,11 @@ class ReactNativeFeatureFlags {
    * Parse CSS strings using the Fabric CSS parser instead of ViewConfig processing
    */
   RN_EXPORT static bool enableNativeCSSParsing();
+
+  /**
+   * When enabled together with `enableAccumulatedUpdatesInRawPropsAndroid`, the Insert of a preallocated view only sends the difference between the props the view was preallocated with and the inserted props, instead of sending all props again on every Insert.
+   */
+  RN_EXPORT static bool enablePreallocatedPropsDiffOnInsertAndroid();
 
   /**
    * Enables caching text layout artifacts for later reuse

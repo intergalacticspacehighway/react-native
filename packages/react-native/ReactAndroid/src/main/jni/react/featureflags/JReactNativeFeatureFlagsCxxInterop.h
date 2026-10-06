@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<913ddf4c8e4d0b4f897ff51e6d403b69>>
+ * @generated SignedSource<<06b9b77875119ad958e7dc91392461f7>>
  */
 
 /**
@@ -166,6 +166,9 @@ class JReactNativeFeatureFlagsCxxInterop
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableNativeCSSParsing(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
+
+  static bool enablePreallocatedPropsDiffOnInsertAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enablePreparedTextLayout(

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c91754a8d13aa0ebd47869b9de93e6cc>>
+ * @generated SignedSource<<3dc1e4eeabc61f8400063d5c735189b7>>
  */
 
 /**
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <react/cxxstableapi/UmbrellaGuard.h>
+#include <react/cxxstableapi/PrivateGuard.h>
 
 #include <folly/dynamic.h>
 #include <react/featureflags/ReactNativeFeatureFlagsDefaults.h>
@@ -459,6 +459,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::enableNativeCSSParsing();
+  }
+
+  bool enablePreallocatedPropsDiffOnInsertAndroid() override {
+    auto value = values_["enablePreallocatedPropsDiffOnInsertAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enablePreallocatedPropsDiffOnInsertAndroid();
   }
 
   bool enablePreparedTextLayout() override {

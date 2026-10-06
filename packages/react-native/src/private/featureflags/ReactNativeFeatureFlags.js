@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<479d6b0198a9ce1c587b7bcb1ff8ec7d>>
+ * @generated SignedSource<<3b281fdc67ec24b8ebc615b1c5b472e8>>
  * @flow strict
  * @noformat
  */
@@ -95,6 +95,7 @@ export type ReactNativeFeatureFlags = Readonly<{
   enableMountingCoordinatorPullModelAndroid: Getter<boolean>,
   enableMutationObserverByDefault: Getter<boolean>,
   enableNativeCSSParsing: Getter<boolean>,
+  enablePreallocatedPropsDiffOnInsertAndroid: Getter<boolean>,
   enablePreparedTextLayout: Getter<boolean>,
   enablePropsUpdateReconciliationAndroid: Getter<boolean>,
   enableResizeObserverByDefault: Getter<boolean>,
@@ -399,6 +400,10 @@ export const enableMutationObserverByDefault: Getter<boolean> = createNativeFlag
  * Parse CSS strings using the Fabric CSS parser instead of ViewConfig processing
  */
 export const enableNativeCSSParsing: Getter<boolean> = createNativeFlagGetter('enableNativeCSSParsing', false);
+/**
+ * When enabled together with `enableAccumulatedUpdatesInRawPropsAndroid`, the Insert of a preallocated view only sends the difference between the props the view was preallocated with and the inserted props, instead of sending all props again on every Insert.
+ */
+export const enablePreallocatedPropsDiffOnInsertAndroid: Getter<boolean> = createNativeFlagGetter('enablePreallocatedPropsDiffOnInsertAndroid', false);
 /**
  * Enables caching text layout artifacts for later reuse
  */

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<021841c329e90b31fa5865c46c09186a>>
+ * @generated SignedSource<<99bf44416bc7b40ab8914e57f27aa380>>
  */
 
 /**
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <react/cxxstableapi/UmbrellaGuard.h>
+#include <react/cxxstableapi/PrivateGuard.h>
 
 #include <react/featureflags/ReactNativeFeatureFlagsProvider.h>
 #include <array>
@@ -80,6 +80,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool enableMountingCoordinatorPullModelAndroid();
   bool enableMutationObserverByDefault();
   bool enableNativeCSSParsing();
+  bool enablePreallocatedPropsDiffOnInsertAndroid();
   bool enablePreparedTextLayout();
   bool enablePropsUpdateReconciliationAndroid();
   bool enableResizeObserverByDefault();
@@ -135,7 +136,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 90> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 91> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -183,6 +184,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> enableMountingCoordinatorPullModelAndroid_;
   std::atomic<std::optional<bool>> enableMutationObserverByDefault_;
   std::atomic<std::optional<bool>> enableNativeCSSParsing_;
+  std::atomic<std::optional<bool>> enablePreallocatedPropsDiffOnInsertAndroid_;
   std::atomic<std::optional<bool>> enablePreparedTextLayout_;
   std::atomic<std::optional<bool>> enablePropsUpdateReconciliationAndroid_;
   std::atomic<std::optional<bool>> enableResizeObserverByDefault_;

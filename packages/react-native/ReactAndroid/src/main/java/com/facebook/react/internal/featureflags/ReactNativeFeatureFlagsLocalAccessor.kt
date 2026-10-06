@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<330c3dd9643d65d443d3fdc6ac71055e>>
+ * @generated SignedSource<<d0b11301acbebd51fd1a9840012d656e>>
  */
 
 /**
@@ -70,6 +70,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var enableMountingCoordinatorPullModelAndroidCache: Boolean? = null
   private var enableMutationObserverByDefaultCache: Boolean? = null
   private var enableNativeCSSParsingCache: Boolean? = null
+  private var enablePreallocatedPropsDiffOnInsertAndroidCache: Boolean? = null
   private var enablePreparedTextLayoutCache: Boolean? = null
   private var enablePropsUpdateReconciliationAndroidCache: Boolean? = null
   private var enableResizeObserverByDefaultCache: Boolean? = null
@@ -571,6 +572,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.enableNativeCSSParsing()
       accessedFeatureFlags.add("enableNativeCSSParsing")
       enableNativeCSSParsingCache = cached
+    }
+    return cached
+  }
+
+  override fun enablePreallocatedPropsDiffOnInsertAndroid(): Boolean {
+    var cached = enablePreallocatedPropsDiffOnInsertAndroidCache
+    if (cached == null) {
+      cached = currentProvider.enablePreallocatedPropsDiffOnInsertAndroid()
+      accessedFeatureFlags.add("enablePreallocatedPropsDiffOnInsertAndroid")
+      enablePreallocatedPropsDiffOnInsertAndroidCache = cached
     }
     return cached
   }
