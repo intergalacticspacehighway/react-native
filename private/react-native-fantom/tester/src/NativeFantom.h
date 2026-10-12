@@ -122,6 +122,10 @@ class NativeFantom : public NativeFantomCxxSpec<NativeFantom> {
       double width,
       double height);
 
+  void setNativeLayoutOrigin(jsi::Runtime &runtime, std::shared_ptr<const ShadowNode> shadowNode, double x, double y);
+
+  void clearNativeLayoutOrigin(jsi::Runtime &runtime, std::shared_ptr<const ShadowNode> shadowNode);
+
   jsi::Function createShadowNodeReferenceCounter(jsi::Runtime &runtime, std::shared_ptr<const ShadowNode> shadowNode);
 
   jsi::Function createShadowNodeRevisionGetter(jsi::Runtime &runtime, std::shared_ptr<const ShadowNode> shadowNode);

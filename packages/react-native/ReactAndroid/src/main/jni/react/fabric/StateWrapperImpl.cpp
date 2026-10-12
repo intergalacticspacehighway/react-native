@@ -59,6 +59,18 @@ void StateWrapperImpl::updateStateImpl(NativeMap* map) {
   }
 }
 
+void StateWrapperImpl::setNativeLayoutOriginImpl(jfloat x, jfloat y) {
+  if (state_) {
+    state_->setNativeLayoutOrigin(Point{.x = x, .y = y});
+  }
+}
+
+void StateWrapperImpl::clearNativeLayoutOriginImpl() {
+  if (state_) {
+    state_->setNativeLayoutOrigin(std::nullopt);
+  }
+}
+
 void StateWrapperImpl::setState(std::shared_ptr<const State> state) {
   state_ = state;
 }
@@ -72,6 +84,12 @@ void StateWrapperImpl::registerNatives() {
       makeNativeMethod("initHybrid", StateWrapperImpl::initHybrid),
       makeNativeMethod("getStateDataImpl", StateWrapperImpl::getStateDataImpl),
       makeNativeMethod("updateStateImpl", StateWrapperImpl::updateStateImpl),
+      makeNativeMethod(
+          "setNativeLayoutOriginImpl",
+          StateWrapperImpl::setNativeLayoutOriginImpl),
+      makeNativeMethod(
+          "clearNativeLayoutOriginImpl",
+          StateWrapperImpl::clearNativeLayoutOriginImpl),
       makeNativeMethod(
           "getStateMapBufferDataImpl",
           StateWrapperImpl::getStateMapBufferDataImpl),

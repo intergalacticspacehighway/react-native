@@ -35,6 +35,10 @@ internal class StateWrapperImpl private constructor() : HybridClassBase(), Refer
 
   external fun updateStateImpl(map: NativeMap)
 
+  private external fun setNativeLayoutOriginImpl(x: Float, y: Float)
+
+  private external fun clearNativeLayoutOriginImpl()
+
   override val stateDataMapBuffer: ReadableMapBuffer?
     get() {
       if (!isValid) {
@@ -72,6 +76,22 @@ internal class StateWrapperImpl private constructor() : HybridClassBase(), Refer
       return
     }
     updateStateImpl(map as NativeMap)
+  }
+
+  override fun setNativeLayoutOrigin(x: Float, y: Float) {
+    if (!isValid) {
+      FLog.e(TAG, "Race between StateWrapperImpl destruction and setNativeLayoutOrigin")
+      return
+    }
+    setNativeLayoutOriginImpl(x, y)
+  }
+
+  override fun clearNativeLayoutOrigin() {
+    if (!isValid) {
+      FLog.e(TAG, "Race between StateWrapperImpl destruction and clearNativeLayoutOrigin")
+      return
+    }
+    clearNativeLayoutOriginImpl()
   }
 
   override fun destroyState() {

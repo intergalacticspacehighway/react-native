@@ -151,6 +151,7 @@ LayoutMetrics LayoutableShadowNode::computeRelativeLayoutMetrics(
     }
 
     auto currentFrame = currentShadowNode->getLayoutMetrics().frame;
+    currentFrame.origin = currentShadowNode->getOriginInParent();
     if (i == size - 1) {
       // If it's the last element, its origin is irrelevant.
       currentFrame.origin = {.x = 0, .y = 0};
@@ -221,6 +222,11 @@ Point LayoutableShadowNode::getContentOriginOffset(
   return {.x = 0, .y = 0};
 }
 
+Point LayoutableShadowNode::getOriginInParent() const {
+  return getFamily().getNativeLayoutOrigin().value_or(
+      layoutMetrics_.frame.origin);
+}
+
 bool LayoutableShadowNode::canBeTouchTarget() const {
   return false;
 }
@@ -286,6 +292,7 @@ std::shared_ptr<const ShadowNode> LayoutableShadowNode::findNodeAtPoint(
   }
 
   auto layoutMetrics = layoutableShadowNode->getLayoutMetrics();
+  layoutMetrics.frame.origin = layoutableShadowNode->getOriginInParent();
   auto transform = layoutableShadowNode->getTransform();
   auto transformedFrame = layoutMetrics.frame * transform;
   auto isPointInside = transformedFrame.containsPoint(point);

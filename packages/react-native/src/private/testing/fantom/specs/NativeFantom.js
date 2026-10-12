@@ -98,6 +98,12 @@ interface Spec extends TurboModule {
     height: number,
     width: number,
   ) => void;
+  setNativeLayoutOrigin: (
+    shadowNode: unknown /* ShadowNode */,
+    x: number,
+    y: number,
+  ) => void;
+  clearNativeLayoutOrigin: (shadowNode: unknown /* ShadowNode */) => void;
   takeMountingManagerLogs: (surfaceId: RootTag) => Array<string>;
   getDirectManipulationProps: (
     shadowNode: unknown /* ShadowNode */,

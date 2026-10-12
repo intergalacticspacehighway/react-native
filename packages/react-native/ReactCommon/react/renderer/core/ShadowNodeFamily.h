@@ -9,12 +9,15 @@
 
 #include <react/cxxstableapi/UmbrellaGuard.h>
 
+#include <atomic>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 #include <react/renderer/core/EventEmitter.h>
 #include <react/renderer/core/InstanceHandle.h>
 #include <react/renderer/core/ReactPrimitives.h>
+#include <react/renderer/graphics/Point.h>
 
 namespace facebook::react {
 
@@ -118,6 +121,25 @@ class ShadowNodeFamily final : public jsi::NativeState {
   mutable std::unique_ptr<folly::dynamic> nativeProps_DEPRECATED;
   mutable std::mutex nativePropsMutex;
 
+  /*
+   * Sets where the host platform placed nodes of this family, as an origin in
+   * the coordinate space of the parent node. Use it for a node that a native
+   * layout system positions instead of Yoga, for example a view inside a
+   * native stack or navigation bar. `std::nullopt` means the node is where its
+   * computed layout puts it.
+   * Layout inspection (`measure`, `getBoundingClientRect`, hit testing) uses
+   * this origin instead of the computed one. Setting it does not commit a new
+   * revision and does not change the computed layout.
+   * Can be called from any thread.
+   */
+  void setNativeLayoutOrigin(std::optional<Point> origin) const;
+
+  /*
+   * Returns the origin set with `setNativeLayoutOrigin`, if any.
+   * Can be called from any thread.
+   */
+  std::optional<Point> getNativeLayoutOrigin() const;
+
   /**
    * @return tag for the ShadowNodeFamily.
    */
@@ -194,6 +216,14 @@ class ShadowNodeFamily final : public jsi::NativeState {
    * For optimization purposes only.
    */
   bool hasParent_{false};
+
+  /*
+   * See `setNativeLayoutOrigin`. `hasNativeLayoutOrigin_` lets the common case,
+   * a family without a native layout origin, skip the lock.
+   */
+  mutable std::atomic<bool> hasNativeLayoutOrigin_{false};
+  mutable std::optional<Point> nativeLayoutOrigin_;
+  mutable std::mutex nativeLayoutOriginMutex_;
 
   /*
    * Determines if the ShadowNodeFamily was ever mounted on the screen.

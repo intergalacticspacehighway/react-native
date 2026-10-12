@@ -1431,4 +1431,100 @@ TEST(LayoutableShadowNodeTest, inversedContentOriginOffset) {
   EXPECT_EQ(relativeLayoutMetrics.frame.origin.y, 130);
 }
 
+/*
+ * ┌──────────────────────────┐
+ * │<View>                    │
+ * │  ┌─────────────────────┐ │
+ * │  │<View nativeParent>  │ │
+ * │  │   ┌──────────────┐  │ │
+ * │  │   │<View         │  │ │
+ * │  │   │  positioned> │  │ │
+ * │  │   │   ┌───────┐  │  │ │
+ * │  │   │   │<View> │  │  │ │
+ * │  │   │   └───────┘  │  │ │
+ * │  │   └──────────────┘  │ │
+ * │  └─────────────────────┘ │
+ * └──────────────────────────┘
+ */
+TEST(LayoutableShadowNodeTest, relativeLayoutMetricsWithNativeLayoutOrigin) {
+  auto builder = simpleComponentBuilder();
+  auto nativeParentShadowNode = std::shared_ptr<ViewShadowNode>{};
+  auto positionedShadowNode = std::shared_ptr<ViewShadowNode>{};
+  auto childShadowNode = std::shared_ptr<ViewShadowNode>{};
+  // clang-format off
+  auto element =
+    Element<ViewShadowNode>()
+      .finalize([](ViewShadowNode &shadowNode){
+        auto layoutMetrics = EmptyLayoutMetrics;
+        layoutMetrics.frame.origin = {.x=10, .y=20};
+        layoutMetrics.frame.size = {.width=300, .height=300};
+        shadowNode.setLayoutMetrics(layoutMetrics);
+      })
+      .children({
+        Element<ViewShadowNode>()
+        .finalize([](ViewShadowNode &shadowNode){
+          auto layoutMetrics = EmptyLayoutMetrics;
+          layoutMetrics.frame.origin = {.x=50, .y=50};
+          layoutMetrics.frame.size = {.width=200, .height=200};
+          shadowNode.setLayoutMetrics(layoutMetrics);
+        })
+        .reference(nativeParentShadowNode)
+        .children({
+          Element<ViewShadowNode>()
+          .finalize([](ViewShadowNode &shadowNode){
+            auto layoutMetrics = EmptyLayoutMetrics;
+            layoutMetrics.frame.origin = {.x=5, .y=5};
+            layoutMetrics.frame.size = {.width=40, .height=40};
+            shadowNode.setLayoutMetrics(layoutMetrics);
+          })
+          .reference(positionedShadowNode)
+          .children({
+            Element<ViewShadowNode>()
+            .finalize([](ViewShadowNode &shadowNode){
+              auto layoutMetrics = EmptyLayoutMetrics;
+              layoutMetrics.frame.origin = {.x=1, .y=2};
+              layoutMetrics.frame.size = {.width=10, .height=10};
+              shadowNode.setLayoutMetrics(layoutMetrics);
+            })
+            .reference(childShadowNode)
+          })
+        })
+    });
+  // clang-format on
+
+  auto rootShadowNode = builder.build(element);
+
+  // The host platform draws `nativeParent` at the origin of its parent and
+  // `positioned` at {100, 40} inside it.
+  nativeParentShadowNode->getFamily().setNativeLayoutOrigin(
+      Point{.x = 0, .y = 0});
+  positionedShadowNode->getFamily().setNativeLayoutOrigin(
+      Point{.x = 100, .y = 40});
+
+  auto relativeLayoutMetrics =
+      LayoutableShadowNode::computeRelativeLayoutMetrics(
+          childShadowNode->getFamily(), *rootShadowNode, {});
+
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.x, 101);
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.y, 42);
+  EXPECT_EQ(relativeLayoutMetrics.frame.size.width, 10);
+  EXPECT_EQ(relativeLayoutMetrics.frame.size.height, 10);
+
+  // The origin of the node itself is irrelevant when it is the ancestor.
+  relativeLayoutMetrics = LayoutableShadowNode::computeRelativeLayoutMetrics(
+      childShadowNode->getFamily(), *positionedShadowNode, {});
+
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.x, 1);
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.y, 2);
+
+  positionedShadowNode->getFamily().setNativeLayoutOrigin(std::nullopt);
+  nativeParentShadowNode->getFamily().setNativeLayoutOrigin(std::nullopt);
+
+  relativeLayoutMetrics = LayoutableShadowNode::computeRelativeLayoutMetrics(
+      childShadowNode->getFamily(), *rootShadowNode, {});
+
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.x, 56);
+  EXPECT_EQ(relativeLayoutMetrics.frame.origin.y, 57);
+}
+
 } // namespace facebook::react

@@ -510,7 +510,7 @@ RNMeasureRect measure(
   auto layoutableShadowNode = dynamic_cast<const LayoutableShadowNode*>(
       shadowNodeInCurrentRevision.get());
   Point originRelativeToParent = layoutableShadowNode != nullptr
-      ? layoutableShadowNode->getLayoutMetrics().frame.origin
+      ? layoutableShadowNode->getOriginInParent()
       : Point();
 
   auto frame = layoutMetrics.frame;

@@ -4147,9 +4147,11 @@ public final class com/facebook/react/uimanager/Spacing$Companion {
 }
 
 public abstract interface class com/facebook/react/uimanager/StateWrapper {
+	public fun clearNativeLayoutOrigin ()V
 	public abstract fun destroyState ()V
 	public abstract fun getStateData ()Lcom/facebook/react/bridge/ReadableNativeMap;
 	public abstract fun getStateDataMapBuffer ()Lcom/facebook/react/common/mapbuffer/ReadableMapBuffer;
+	public fun setNativeLayoutOrigin (FF)V
 	public abstract fun updateState (Lcom/facebook/react/bridge/WritableMap;)V
 }
 

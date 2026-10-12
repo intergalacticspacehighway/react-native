@@ -36,6 +36,17 @@ public interface StateWrapper {
   public fun updateState(map: WritableMap)
 
   /**
+   * Sets where the host platform placed this view, as an origin in DIPs in the coordinate space of
+   * its parent. Use it for a view that a native layout system positions instead of Yoga. Layout
+   * inspection, such as `measure`, reports this origin. It takes effect immediately and does not
+   * commit a new revision.
+   */
+  public fun setNativeLayoutOrigin(x: Float, y: Float): Unit = Unit
+
+  /** Clears the origin set with [setNativeLayoutOrigin], so the computed layout is used again. */
+  public fun clearNativeLayoutOrigin(): Unit = Unit
+
+  /**
    * Mark state as unused and clean up in Java and in native. This should be called as early as
    * possible when you know a StateWrapper will no longer be used. If there's ANY chance of it being
    * used legitimately, don't destroy it! It is expected that all StateWrappers are destroyed

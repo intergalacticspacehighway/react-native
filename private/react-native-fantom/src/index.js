@@ -641,6 +641,35 @@ export function scrollTo(nodeOrRef: NodeOrRef, options: ScrollEventOptions) {
  * // The effects of `enqueueModalSizeUpdate` are yet observable.
  * ```
  */
+/**
+ * Sets where the host platform placed a node, as an origin in the coordinate
+ * space of its parent, or clears it with `null`. Simulates a native layout
+ * system (for example a native stack) that positions the node instead of Yoga.
+ * Layout inspection APIs such as `measure` and `getBoundingClientRect` report
+ * this origin. It takes effect immediately and does not commit a new revision.
+ *
+ * @params node - The node that the host platform positioned.
+ * @params origin - The origin in the parent's coordinate space, or `null` to
+ * use the computed layout again.
+ *
+ * @example
+ * ```
+ * Fantom.setNativeLayoutOrigin(element, {x: 100, y: 40});
+ * ```
+ */
+export function setNativeLayoutOrigin(
+  nodeOrRef: NodeOrRef,
+  origin: ?Readonly<{x: number, y: number}>,
+) {
+  const node = getNode(nodeOrRef);
+  const shadowNode = getNodeFromPublicInstance(node);
+  if (origin == null) {
+    NativeFantom.clearNativeLayoutOrigin(shadowNode);
+  } else {
+    NativeFantom.setNativeLayoutOrigin(shadowNode, origin.x, origin.y);
+  }
+}
+
 export function enqueueModalSizeUpdate(
   nodeOrRef: NodeOrRef,
   size: Readonly<{width: number, height: number}>,

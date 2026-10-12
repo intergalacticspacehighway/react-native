@@ -64,6 +64,13 @@ class State {
    */
   size_t getRevision() const;
 
+  /*
+   * Sets where the host platform placed the node that owns this state.
+   * See `ShadowNodeFamily::setNativeLayoutOrigin`.
+   * Can be called from any thread.
+   */
+  void setNativeLayoutOrigin(std::optional<Point> origin) const;
+
 #ifdef RN_SERIALIZABLE_STATE
   virtual folly::dynamic getDynamic() const = 0;
   virtual MapBuffer getMapBuffer() const = 0;

@@ -76,6 +76,20 @@ Tag ShadowNodeFamily::getTag() const {
   return tag_;
 }
 
+void ShadowNodeFamily::setNativeLayoutOrigin(std::optional<Point> origin) const {
+  std::scoped_lock lock(nativeLayoutOriginMutex_);
+  nativeLayoutOrigin_ = origin;
+  hasNativeLayoutOrigin_.store(origin.has_value(), std::memory_order_release);
+}
+
+std::optional<Point> ShadowNodeFamily::getNativeLayoutOrigin() const {
+  if (!hasNativeLayoutOrigin_.load(std::memory_order_acquire)) {
+    return std::nullopt;
+  }
+  std::scoped_lock lock(nativeLayoutOriginMutex_);
+  return nativeLayoutOrigin_;
+}
+
 jsi::Value ShadowNodeFamily::getInstanceHandle(jsi::Runtime& runtime) const {
   if (instanceHandle_ == nullptr) {
     return jsi::Value::null();

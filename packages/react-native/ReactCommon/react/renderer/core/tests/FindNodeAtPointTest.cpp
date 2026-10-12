@@ -452,3 +452,59 @@ TEST(FindNodeAtPointTest, considersOverflowAreaOfTheParent) {
           ->getTag(),
       3);
 }
+
+TEST(FindNodeAtPointTest, usesNativeLayoutOrigin) {
+  auto builder = simpleComponentBuilder();
+  auto positionedShadowNode = std::shared_ptr<ViewShadowNode>{};
+
+  // clang-format off
+  auto element =
+    Element<ViewShadowNode>()
+      .tag(1)
+      .finalize([](ViewShadowNode &shadowNode){
+        auto layoutMetrics = EmptyLayoutMetrics;
+        layoutMetrics.frame.size = {.width=1000, .height=1000};
+        shadowNode.setLayoutMetrics(layoutMetrics);
+      })
+      .children({
+        Element<ViewShadowNode>()
+        .tag(2)
+        .reference(positionedShadowNode)
+        .finalize([](ViewShadowNode &shadowNode){
+          auto layoutMetrics = EmptyLayoutMetrics;
+          layoutMetrics.frame.origin = {.x=100, .y=100};
+          layoutMetrics.frame.size = {.width=100, .height=100};
+          shadowNode.setLayoutMetrics(layoutMetrics);
+        })
+        .children({
+          Element<ViewShadowNode>()
+          .tag(3)
+          .finalize([](ViewShadowNode &shadowNode){
+            auto layoutMetrics = EmptyLayoutMetrics;
+            layoutMetrics.frame.origin = {.x=10, .y=10};
+            layoutMetrics.frame.size = {.width=10, .height=10};
+            shadowNode.setLayoutMetrics(layoutMetrics);
+          })
+        })
+    });
+  // clang-format on
+
+  auto parentShadowNode = builder.build(element);
+
+  positionedShadowNode->getFamily().setNativeLayoutOrigin(
+      Point{.x = 500, .y = 300});
+
+  EXPECT_EQ(
+      LayoutableShadowNode::findNodeAtPoint(parentShadowNode, {515, 315})
+          ->getTag(),
+      3);
+  EXPECT_EQ(
+      LayoutableShadowNode::findNodeAtPoint(parentShadowNode, {505, 305})
+          ->getTag(),
+      2);
+  // The computed position is empty now.
+  EXPECT_EQ(
+      LayoutableShadowNode::findNodeAtPoint(parentShadowNode, {115, 115})
+          ->getTag(),
+      1);
+}

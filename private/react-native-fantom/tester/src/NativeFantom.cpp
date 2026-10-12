@@ -217,6 +217,21 @@ void NativeFantom::enqueueModalSizeUpdate(
        .height = static_cast<Float>(height)}));
 }
 
+void NativeFantom::setNativeLayoutOrigin(
+    jsi::Runtime& /*runtime*/,
+    std::shared_ptr<const ShadowNode> shadowNode,
+    double x,
+    double y) {
+  shadowNode->getFamily().setNativeLayoutOrigin(
+      Point{.x = static_cast<Float>(x), .y = static_cast<Float>(y)});
+}
+
+void NativeFantom::clearNativeLayoutOrigin(
+    jsi::Runtime& /*runtime*/,
+    std::shared_ptr<const ShadowNode> shadowNode) {
+  shadowNode->getFamily().setNativeLayoutOrigin(std::nullopt);
+}
+
 jsi::Function NativeFantom::createShadowNodeReferenceCounter(
     jsi::Runtime& runtime,
     std::shared_ptr<const ShadowNode> shadowNode) {

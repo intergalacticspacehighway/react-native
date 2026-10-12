@@ -26,6 +26,12 @@ State::State(StateData::Shared data, ShadowNodeFamily::Weak family)
       data_(std::move(data)),
       revision_{State::initialRevisionValue} {};
 
+void State::setNativeLayoutOrigin(std::optional<Point> origin) const {
+  if (auto family = family_.lock()) {
+    family->setNativeLayoutOrigin(origin);
+  }
+}
+
 State::Shared State::getMostRecentState() const {
   auto family = family_.lock();
   if (!family) {

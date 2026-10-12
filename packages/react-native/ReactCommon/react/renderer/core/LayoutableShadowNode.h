@@ -136,6 +136,14 @@ class LayoutableShadowNode : public ShadowNode {
   virtual Point getContentOriginOffset(bool includeTransform) const;
 
   /*
+   * Returns the origin of the node in the coordinate space of its parent: the
+   * native layout origin of its family if the host platform set one (see
+   * `ShadowNodeFamily::setNativeLayoutOrigin`), otherwise the computed origin.
+   * Layout inspection uses this instead of `getLayoutMetrics().frame.origin`.
+   */
+  Point getOriginInParent() const;
+
+  /*
    * Sets layout metrics for the shadow node.
    */
   void setLayoutMetrics(LayoutMetrics layoutMetrics);
