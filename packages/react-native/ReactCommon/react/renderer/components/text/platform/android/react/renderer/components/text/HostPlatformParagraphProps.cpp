@@ -166,6 +166,14 @@ folly::dynamic HostPlatformParagraphProps::getDiffProps(
     result["onTextLayout"] = onTextLayout;
   }
 
+  if (selectionMenuItems != oldProps->selectionMenuItems) {
+    auto items = folly::dynamic::array();
+    for (const auto& item : selectionMenuItems) {
+      items.push_back(folly::dynamic::object("id", item.id)("title", item.title));
+    }
+    result["selectionMenuItems"] = std::move(items);
+  }
+
   if (disabled != oldProps->disabled) {
     result["disabled"] = disabled;
   }

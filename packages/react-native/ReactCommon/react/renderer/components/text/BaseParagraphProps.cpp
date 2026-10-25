@@ -16,6 +16,24 @@
 
 namespace facebook::react {
 
+static inline void fromRawValue(
+    const PropsParserContext& /*context*/,
+    const RawValue& value,
+    SelectionMenuItem& result) {
+  if (!value.hasType<std::unordered_map<std::string, RawValue>>()) {
+    return;
+  }
+  auto map = static_cast<std::unordered_map<std::string, RawValue>>(value);
+  auto id = map.find("id");
+  if (id != map.end() && id->second.hasType<std::string>()) {
+    result.id = static_cast<std::string>(id->second);
+  }
+  auto title = map.find("title");
+  if (title != map.end() && title->second.hasType<std::string>()) {
+    result.title = static_cast<std::string>(title->second);
+  }
+}
+
 BaseParagraphProps::BaseParagraphProps(
     const PropsParserContext& context,
     const BaseParagraphProps& sourceProps,
@@ -33,6 +51,12 @@ BaseParagraphProps::BaseParagraphProps(
           "selectable",
           sourceProps.isSelectable,
           false)),
+      selectionMenuItems(convertRawProp(
+          context,
+          rawProps,
+          "selectionMenuItems",
+          sourceProps.selectionMenuItems,
+          {})),
       onTextLayout(convertRawProp(
           context,
           rawProps,
@@ -130,6 +154,7 @@ void BaseParagraphProps::setProp(
 
   switch (hash) {
     RAW_SET_PROP_SWITCH_CASE(isSelectable, "selectable");
+    RAW_SET_PROP_SWITCH_CASE_BASIC(selectionMenuItems);
     RAW_SET_PROP_SWITCH_CASE_BASIC(onTextLayout);
   }
 

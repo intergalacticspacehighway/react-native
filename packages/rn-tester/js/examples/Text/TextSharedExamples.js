@@ -265,7 +265,45 @@ function LastLineClippingExample(): React.Node {
   );
 }
 
+const SELECTION_MENU_ITEMS = [
+  {id: 'add-to-chat', title: 'Add to chat'},
+  {id: 'quote', title: 'Quote'},
+];
+
+function SelectionMenuItemsExample(): React.Node {
+  const [lastPress, setLastPress] = useState('None');
+  return (
+    <View>
+      <RNTesterText testID="selection-menu-last-press">
+        Last press: {lastPress}
+      </RNTesterText>
+      <Text
+        selectable
+        selectionMenuItems={SELECTION_MENU_ITEMS}
+        onSelectionMenuItemPress={({nativeEvent}) =>
+          setLastPress(
+            `${nativeEvent.id}: "${nativeEvent.selectedText}" [${nativeEvent.start}, ${nativeEvent.end})`,
+          )
+        }>
+        Long press to select part of this text, then pick{' '}
+        <Text style={{fontWeight: 'bold'}}>Add to chat</Text> or Quote from the
+        menu.
+      </Text>
+    </View>
+  );
+}
+
 export default [
+  {
+    title: 'Selection menu items',
+    name: 'selectionMenuItems',
+    description:
+      'A selectable Text adds custom items to its selection menu. On iOS, ' +
+      'this needs the enableIOSPartialTextSelection feature flag.',
+    expect:
+      'Selecting text shows "Add to chat" and "Quote", and pressing one shows the selected range.',
+    render: SelectionMenuItemsExample,
+  },
   {
     title: 'Empty Text',
     name: 'emptyText',

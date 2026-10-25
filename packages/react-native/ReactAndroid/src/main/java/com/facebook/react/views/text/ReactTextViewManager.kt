@@ -20,6 +20,7 @@ import android.view.Gravity
 import com.facebook.common.logging.FLog
 import com.facebook.react.R
 import com.facebook.react.bridge.Dynamic
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.common.annotations.UnstableReactNativeAPI
 import com.facebook.react.common.mapbuffer.MapBuffer
@@ -77,6 +78,7 @@ public constructor(
       preparedView.recycleView()
       // Reset selection color to default
       setSelectionColor(preparedView, null)
+      preparedView.customSelectionActionModeCallback = null
     }
     return preparedView
   }
@@ -240,7 +242,13 @@ public constructor(
   override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any>? {
     val baseEventTypeConstants = super.getExportedCustomDirectEventTypeConstants()
     val eventTypeConstants = baseEventTypeConstants ?: HashMap()
-    eventTypeConstants.putAll(mapOf("topTextLayout" to mapOf("registrationName" to "onTextLayout")))
+    eventTypeConstants.putAll(
+        mapOf(
+            "topTextLayout" to mapOf("registrationName" to "onTextLayout"),
+            SelectionMenuItemPressEvent.EVENT_NAME to
+                mapOf("registrationName" to "onSelectionMenuItemPress"),
+        )
+    )
     return eventTypeConstants
   }
 
@@ -322,6 +330,13 @@ public constructor(
   @ReactProp(name = "selectable")
   public fun setSelectable(view: ReactTextView, isSelectable: Boolean) {
     view.setTextIsSelectable(isSelectable)
+  }
+
+  @ReactProp(name = "selectionMenuItems")
+  public fun setSelectionMenuItems(view: ReactTextView, items: ReadableArray?) {
+    val menuItems = selectionMenuItemsFromArray(items)
+    view.customSelectionActionModeCallback =
+        if (menuItems.isEmpty()) null else SelectionMenuItemsCallback(view, menuItems)
   }
 
   @ReactProp(name = "selectionColor", customType = "Color")

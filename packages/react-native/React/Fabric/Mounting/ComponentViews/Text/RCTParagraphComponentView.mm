@@ -12,6 +12,7 @@
 #import <MobileCoreServices/UTCoreTypes.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
 #import <react/renderer/components/text/ParagraphComponentDescriptor.h>
+#import <react/renderer/components/text/ParagraphEventEmitter.h>
 #import <react/renderer/components/text/ParagraphProps.h>
 #import <react/renderer/components/text/ParagraphState.h>
 #import <react/renderer/components/text/RawTextComponentDescriptor.h>
@@ -153,6 +154,12 @@ static BOOL RCTAttributedStringHasAttachments(const AttributedString &attributed
   }
 
   [super updateProps:props oldProps:oldProps];
+
+#if !TARGET_OS_TV
+  if (newParagraphProps.selectionMenuItems != oldParagraphProps.selectionMenuItems) {
+    _selectableTextView.menuItems = [self selectionMenuItems];
+  }
+#endif
 }
 
 - (void)updateState:(const State::Shared &)state oldState:(const State::Shared &)oldState
@@ -591,6 +598,11 @@ static BOOL RCTAttributedStringHasAttachments(const AttributedString &attributed
 
     [_selectableTextView removeFromSuperview];
     _selectableTextView = [[RCTSelectableTextView alloc] initWithFrame:drawingFrame textContainer:textContainer];
+    _selectableTextView.menuItems = [self selectionMenuItems];
+    __weak __typeof(self) weakSelf = self;
+    _selectableTextView.onMenuItemPress = ^(NSString *itemId, NSRange range) {
+      [weakSelf dispatchSelectionMenuItemPress:itemId range:range];
+    };
     // Under the drawn paragraph, which is how a native text view stacks the two:
     // UIKit paints the selection, and the glyphs go on top of it. The drawn
     // paragraph passes touches through, so the text view still gets them.
@@ -607,6 +619,32 @@ static BOOL RCTAttributedStringHasAttachments(const AttributedString &attributed
 
   _selectableTextView.frame = drawingFrame;
   _selectableTextView.sourceAttributedText = attributedText;
+}
+- (NSArray<NSDictionary<NSString *, NSString *> *> *)selectionMenuItems
+{
+  const auto &paragraphProps = static_cast<const ParagraphProps &>(*_props);
+  NSMutableArray<NSDictionary<NSString *, NSString *> *> *items = [NSMutableArray new];
+  for (const auto &item : paragraphProps.selectionMenuItems) {
+    [items addObject:@{
+      @"id" : [NSString stringWithUTF8String:item.id.c_str()] ?: @"",
+      @"title" : [NSString stringWithUTF8String:item.title.c_str()] ?: @"",
+    }];
+  }
+  return items;
+}
+
+- (void)dispatchSelectionMenuItemPress:(NSString *)itemId range:(NSRange)range
+{
+  NSString *text = self.attributedText.string;
+  if (!_eventEmitter || text == nil || NSMaxRange(range) > text.length) {
+    return;
+  }
+  const auto &eventEmitter = static_cast<const ParagraphEventEmitter &>(*_eventEmitter);
+  eventEmitter.onSelectionMenuItemPress(
+      itemId.UTF8String ?: "",
+      [text substringWithRange:range].UTF8String ?: "",
+      static_cast<int>(range.location),
+      static_cast<int>(NSMaxRange(range)));
 }
 #else
 - (void)enableContextMenu

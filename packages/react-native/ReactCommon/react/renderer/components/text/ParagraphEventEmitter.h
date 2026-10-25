@@ -20,6 +20,12 @@ class ParagraphEventEmitter : public ViewEventEmitter {
 
   void onTextLayout(const LinesMeasurements &linesMeasurements) const;
 
+  /*
+   * A `selectionMenuItems` item was pressed. `start` and `end` are UTF-16
+   * indexes of the selection in the paragraph's text.
+   */
+  void onSelectionMenuItemPress(const std::string &id, const std::string &selectedText, int start, int end) const;
+
  private:
   mutable std::mutex linesMeasurementsMutex_;
   mutable LinesMeasurements linesMeasurementsMetrics_;

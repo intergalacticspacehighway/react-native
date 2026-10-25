@@ -14,7 +14,20 @@
 #include <react/renderer/attributedstring/ParagraphAttributes.h>
 #include <react/renderer/components/text/BaseTextProps.h>
 
+#include <string>
+#include <vector>
+
 namespace facebook::react {
+
+/*
+ * An item that a selectable paragraph adds to the text selection menu.
+ */
+struct SelectionMenuItem {
+  std::string id;
+  std::string title;
+
+  bool operator==(const SelectionMenuItem &rhs) const = default;
+};
 
 /*
  * Props of <Paragraph> component.
@@ -44,6 +57,11 @@ class BaseParagraphProps : public ViewProps, public BaseTextProps {
    * Defines can the text be selected (and copied) or not.
    */
   bool isSelectable{};
+
+  /*
+   * Items added to the menu of a text selection, before the system items.
+   */
+  std::vector<SelectionMenuItem> selectionMenuItems{};
 
   bool onTextLayout{};
 

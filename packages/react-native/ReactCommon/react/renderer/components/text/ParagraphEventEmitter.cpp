@@ -50,4 +50,21 @@ void ParagraphEventEmitter::onTextLayout(
   });
 }
 
+void ParagraphEventEmitter::onSelectionMenuItemPress(
+    const std::string& id,
+    const std::string& selectedText,
+    int start,
+    int end) const {
+  dispatchEvent(
+      "selectionMenuItemPress",
+      [id, selectedText, start, end](jsi::Runtime& runtime) {
+        auto payload = jsi::Object(runtime);
+        payload.setProperty(runtime, "id", id);
+        payload.setProperty(runtime, "selectedText", selectedText);
+        payload.setProperty(runtime, "start", start);
+        payload.setProperty(runtime, "end", end);
+        return payload;
+      });
+}
+
 } // namespace facebook::react

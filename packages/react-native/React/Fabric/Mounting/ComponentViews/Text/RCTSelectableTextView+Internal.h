@@ -45,6 +45,17 @@ RCT_EXTERN NSAttributedString *RCTUnpaintedAttributedString(NSAttributedString *
  */
 @property (nonatomic, copy, nullable) NSAttributedString *sourceAttributedText;
 
+/*
+ * Items of the shape `{id, title}` from the `selectionMenuItems` prop. The edit
+ * menu shows them before the system items.
+ */
+@property (nonatomic, copy) NSArray<NSDictionary<NSString *, NSString *> *> *menuItems;
+
+/*
+ * Called when one of `menuItems` is pressed, with the selected range.
+ */
+@property (nonatomic, copy, nullable) void (^onMenuItemPress)(NSString *itemId, NSRange range);
+
 @end
 
 NS_ASSUME_NONNULL_END

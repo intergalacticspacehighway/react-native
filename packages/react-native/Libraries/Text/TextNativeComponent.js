@@ -41,6 +41,7 @@ const textViewConfig = {
     disabled: true,
     selectable: true,
     selectionColor: true,
+    selectionMenuItems: true,
     adjustsFontSizeToFit: true,
     minimumFontScale: true,
     textBreakStrategy: true,
@@ -54,6 +55,9 @@ const textViewConfig = {
   directEventTypes: {
     topTextLayout: {
       registrationName: 'onTextLayout',
+    },
+    topSelectionMenuItemPress: {
+      registrationName: 'onSelectionMenuItemPress',
     },
   },
   uiViewClassName: 'RCTText',

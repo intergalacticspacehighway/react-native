@@ -19,11 +19,33 @@ import type {ColorValue, TextStyleProp} from '../StyleSheet/StyleSheet';
 import type {
   GestureResponderEvent,
   LayoutChangeEvent,
+  NativeSyntheticEvent,
   PointerEvent,
   TextLayoutEvent,
 } from '../Types/CoreEventTypes';
 
 import * as React from 'react';
+
+/**
+ * An item that a selectable `Text` adds to its selection menu.
+ */
+export type SelectionMenuItem = Readonly<{
+  id: string,
+  title: string,
+}>;
+
+export type SelectionMenuItemPressEvent = NativeSyntheticEvent<
+  Readonly<{
+    /** The `id` of the item that was pressed. */
+    id: string,
+    /** The selected text. */
+    selectedText: string,
+    /** The start of the selection, as a UTF-16 index into the text. */
+    start: number,
+    /** The end of the selection, as a UTF-16 index into the text. */
+    end: number,
+  }>,
+>;
 
 export type PressRetentionOffset = Readonly<{
   top: number,
@@ -246,6 +268,18 @@ type TextBaseProps = Readonly<{
    * @default `false`
    */
   selectable?: ?boolean,
+
+  /**
+   * Items added to the menu of a text selection, before the system items on
+   * iOS and after Copy on Android. Requires `selectable`. On iOS, the menu
+   * needs range selection (`enableIOSPartialTextSelection`) and iOS 16 or later.
+   */
+  selectionMenuItems?: ?ReadonlyArray<SelectionMenuItem>,
+
+  /**
+   * Invoked when an item of `selectionMenuItems` is pressed.
+   */
+  onSelectionMenuItemPress?: ?(event: SelectionMenuItemPressEvent) => unknown,
 
   style?: ?TextStyleProp,
 

@@ -56,6 +56,7 @@ NSAttributedString *RCTUnpaintedAttributedString(NSAttributedString *attributedS
     // the accessibility tree leaves that contract exactly as it was.
     self.accessibilityElementsHidden = YES;
     self.delegate = self;
+    _menuItems = @[];
   }
   return self;
 }
@@ -209,6 +210,38 @@ NSAttributedString *RCTUnpaintedAttributedString(NSAttributedString *attributedS
   [item setObject:selectedText.string forKey:(id)kUTTypeUTF8PlainText];
 
   UIPasteboard.generalPasteboard.items = @[ item ];
+}
+
+#pragma mark - Menu items
+
+- (UIMenu *)editMenuForTextRange:(UITextRange *)textRange
+                suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions API_AVAILABLE(ios(16.0))
+{
+  if (_menuItems.count == 0) {
+    return [super editMenuForTextRange:textRange suggestedActions:suggestedActions];
+  }
+
+  NSInteger location = [self offsetFromPosition:self.beginningOfDocument toPosition:textRange.start];
+  NSInteger length = [self offsetFromPosition:textRange.start toPosition:textRange.end];
+  NSRange range = NSMakeRange(location, length);
+
+  NSMutableArray<UIMenuElement *> *children = [NSMutableArray new];
+  __weak __typeof(self) weakSelf = self;
+  for (NSDictionary<NSString *, NSString *> *item in _menuItems) {
+    NSString *itemId = item[@"id"];
+    [children addObject:[UIAction actionWithTitle:item[@"title"]
+                                            image:nil
+                                       identifier:nil
+                                          handler:^(__kindof UIAction *action) {
+                                            __typeof(self) strongSelf = weakSelf;
+                                            if (strongSelf.onMenuItemPress) {
+                                              strongSelf.onMenuItemPress(itemId, range);
+                                            }
+                                            [strongSelf resignFirstResponder];
+                                          }]];
+  }
+  [children addObjectsFromArray:suggestedActions];
+  return [UIMenu menuWithChildren:children];
 }
 
 @end
