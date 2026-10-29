@@ -16,6 +16,8 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import com.facebook.common.logging.FLog
+import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.FloatUtil
 import com.facebook.react.uimanager.LengthPercentage
 import com.facebook.react.uimanager.LengthPercentageType
@@ -288,20 +290,27 @@ internal class BackgroundImageDrawable(
         val urlImageMatrix = urlImage?.drawMatrix(tileWidth, tileHeight)
         var translateX = initialX
         var translateY: Float
-        repeat(xTilesCount) {
-          translateY = initialY
-          repeat(yTilesCount) {
-            canvas.save()
-            canvas.translate(translateX, translateY)
-            if (urlImage != null && urlImageMatrix != null) {
-              canvas.drawBitmap(urlImage.bitmap, urlImageMatrix, backgroundPaint)
-            } else {
-              canvas.drawRect(0f, 0f, tileWidth, tileHeight, backgroundPaint)
+        val saveCount = canvas.saveCount
+        try {
+          repeat(xTilesCount) {
+            translateY = initialY
+            repeat(yTilesCount) {
+              canvas.save()
+              canvas.translate(translateX, translateY)
+              if (urlImage != null && urlImageMatrix != null) {
+                canvas.drawBitmap(urlImage.bitmap, urlImageMatrix, backgroundPaint)
+              } else {
+                canvas.drawRect(0f, 0f, tileWidth, tileHeight, backgroundPaint)
+              }
+              canvas.restore()
+              translateY += tileHeight + ySpacing
             }
-            canvas.restore()
-            translateY += tileHeight + ySpacing
+            translateX += tileWidth + xSpacing
           }
-          translateX += tileWidth + xSpacing
+        } catch (e: RuntimeException) {
+          // Like `ReactImageView`: the canvas throws for a bitmap that is too large to draw.
+          canvas.restoreToCount(saveCount)
+          FLog.w(ReactConstants.TAG, e, "Could not draw background image: %s", uri)
         }
       }
     }
