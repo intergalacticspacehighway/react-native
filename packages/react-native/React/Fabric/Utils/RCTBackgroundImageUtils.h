@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
 #import <React/Graphics.h>
+#import <UIKit/UIKit.h>
 
 @interface RCTBackgroundImageUtils : NSObject
 
@@ -23,5 +24,7 @@
                              backgroundPosition:(const facebook::react::BackgroundPosition &)backgroundPosition
                                backgroundRepeat:(const facebook::react::BackgroundRepeat &)backgroundRepeat
                                       itemLayer:(CALayer *)itemLayer;
+
++ (CALayer *)createURLImageLayerWithImage:(UIImage *)image size:(CGSize)size;
 
 @end

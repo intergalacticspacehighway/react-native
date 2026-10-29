@@ -661,6 +661,7 @@ interface RCTBackgroundImageURLLoader : public NSObject {
 
 interface RCTBackgroundImageUtils : public NSObject {
   public virtual static CALayer* createBackgroundImageLayerWithSize:paintingArea:itemSize:backgroundPosition:backgroundRepeat:itemLayer:(const CGRect& positioningArea, const CGRect& paintingArea, const CGSize& itemSize, const facebook::react::BackgroundPosition& backgroundPosition, const facebook::react::BackgroundRepeat& backgroundRepeat, CALayer* itemLayer);
+  public virtual static CALayer* createURLImageLayerWithImage:size:(UIImage* image, CGSize size);
   public virtual static CGSize calculateBackgroundImageSize:itemIntrinsicSize:itemHasIntrinsicRatio:backgroundSize:backgroundRepeat:(const CGRect& positioningArea, CGSize itemIntrinsicSize, BOOL itemHasIntrinsicRatio, const facebook::react::BackgroundSize& backgroundSize, const facebook::react::BackgroundRepeat& backgroundRepeat);
 }
 

@@ -1458,9 +1458,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
         const auto &radialGradient = std::get<RadialGradient>(backgroundImage);
         itemLayer = [RCTRadialGradient gradientLayerWithSize:backgroundImageSize gradient:radialGradient];
       } else if (urlImage != nil) {
-        itemLayer = [CALayer layer];
-        itemLayer.frame = CGRectMake(0, 0, backgroundImageSize.width, backgroundImageSize.height);
-        itemLayer.contents = (__bridge id)urlImage.CGImage;
+        itemLayer = [RCTBackgroundImageUtils createURLImageLayerWithImage:urlImage size:backgroundImageSize];
       }
 
       if (itemLayer != nil) {
