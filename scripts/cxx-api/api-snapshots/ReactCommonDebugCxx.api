@@ -2072,10 +2072,10 @@ struct facebook::react::TransformOrigin {
 }
 
 struct facebook::react::URLBackgroundImage {
+  public Float intrinsicHeight;
+  public Float intrinsicWidth;
   public bool operator!=(const facebook::react::URLBackgroundImage& rhs) const;
   public bool operator==(const facebook::react::URLBackgroundImage& rhs) const;
-  public facebook::react::Float intrinsicHeight;
-  public facebook::react::Float intrinsicWidth;
   public std::string uri;
 }
 

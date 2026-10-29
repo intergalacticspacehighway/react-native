@@ -5524,6 +5524,7 @@ struct facebook::react::CSSDataTypeParser<facebook::react::CSSTranslateY> : publ
 
 struct facebook::react::CSSDataTypeParser<facebook::react::CSSURLFunction> {
   public static std::optional<facebook::react::CSSURLFunction> consumeFunctionBlock(const facebook::react::CSSFunctionBlock& func, facebook::react::CSSValueParser& parser);
+  public static std::optional<facebook::react::CSSURLFunction> consumePreservedToken(const facebook::react::CSSPreservedToken& token);
 }
 
 struct facebook::react::CSSDataTypeParser<facebook::react::CSSZero> {

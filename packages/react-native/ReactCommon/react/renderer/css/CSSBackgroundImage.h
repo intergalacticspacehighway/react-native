@@ -831,7 +831,7 @@ struct CSSURLFunction {
 
 template <>
 struct CSSDataTypeParser<CSSURLFunction> {
-  static constexpr std::optional<CSSURLFunction> consumePreservedToken(const CSSPreservedToken &token)
+  static auto consumePreservedToken(const CSSPreservedToken &token) -> std::optional<CSSURLFunction>
   {
     if (token.type() != CSSTokenType::Url || token.stringValue().empty()) {
       return {};
@@ -843,7 +843,8 @@ struct CSSDataTypeParser<CSSURLFunction> {
   /*
    * A quoted url stays an ordinary function block holding a <string-token>.
    */
-  static auto consumeFunctionBlock(const CSSFunctionBlock &func, CSSValueParser &parser) -> std::optional<CSSURLFunction>
+  static auto consumeFunctionBlock(const CSSFunctionBlock &func, CSSValueParser &parser)
+      -> std::optional<CSSURLFunction>
   {
     if (!iequals(func.name, "url")) {
       return {};

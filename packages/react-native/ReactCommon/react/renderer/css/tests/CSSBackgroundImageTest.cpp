@@ -558,44 +558,50 @@ TEST_F(CSSBackgroundImageTest, RadialGradientNegativeRadius) {
 }
 
 TEST_F(CSSBackgroundImageTest, URLBasicUnquoted) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("url(https://example.com/image.png)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/image.png)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/image.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLDoubleQuoted) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("url(\"https://example.com/image.png\")");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(\"https://example.com/image.png\")");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/image.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLSingleQuoted) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("url('https://example.com/image.png')");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url('https://example.com/image.png')");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/image.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLCaseInsensitive) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("UrL(https://example.com/image.png)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "UrL(https://example.com/image.png)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/image.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithQueryParams) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("url(https://example.com/image.png?size=Large&format=webp)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png?size=Large&format=webp"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/image.png?size=Large&format=webp)");
+  decltype(result) expected = CSSURLFunction{
+      .url = "https://example.com/image.png?size=Large&format=webp"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithWhitespace) {
-  auto result =
-      parseCSSProperty<CSSBackgroundImage>("url(  https://example.com/image.png  )");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/image.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(  https://example.com/image.png  )");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/image.png"};
   ASSERT_EQ(result, expected);
 }
 
@@ -640,38 +646,50 @@ TEST_F(CSSBackgroundImageTest, URLEmptyQuoted) {
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithPort) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(http://localhost:8081/assets/bunny.png)");
-  decltype(result) expected = CSSURLFunction{.url = "http://localhost:8081/assets/bunny.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(http://localhost:8081/assets/bunny.png)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "http://localhost:8081/assets/bunny.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithNumericQueryValues) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(https://example.com/x.png?w=100&h=200)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/x.png?w=100&h=200"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/x.png?w=100&h=200)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/x.png?w=100&h=200"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithNumericPathSegment) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(https://example.com/img/2024/photo.png)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/img/2024/photo.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/img/2024/photo.png)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/img/2024/photo.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithPercentEncoding) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(https://example.com/my%20file.png)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/my%20file.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/my%20file.png)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/my%20file.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLQuotedWithPort) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(\"http://localhost:8081/1.png\")");
-  decltype(result) expected = CSSURLFunction{.url = "http://localhost:8081/1.png"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(\"http://localhost:8081/1.png\")");
+  decltype(result) expected =
+      CSSURLFunction{.url = "http://localhost:8081/1.png"};
   ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLQuotedWithNumericQueryValues) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url('https://example.com/x.png?w=100&h=200')");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/x.png?w=100&h=200"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url('https://example.com/x.png?w=100&h=200')");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/x.png?w=100&h=200"};
   ASSERT_EQ(result, expected);
 }
 
@@ -682,8 +700,10 @@ TEST_F(CSSBackgroundImageTest, URLBadUrlIsInvalid) {
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithFragment) {
-  auto result = parseCSSProperty<CSSBackgroundImage>("url(https://example.com/sprite.svg#icon)");
-  decltype(result) expected = CSSURLFunction{.url = "https://example.com/sprite.svg#icon"};
+  auto result = parseCSSProperty<CSSBackgroundImage>(
+      "url(https://example.com/sprite.svg#icon)");
+  decltype(result) expected =
+      CSSURLFunction{.url = "https://example.com/sprite.svg#icon"};
   ASSERT_EQ(result, expected);
 }
 
