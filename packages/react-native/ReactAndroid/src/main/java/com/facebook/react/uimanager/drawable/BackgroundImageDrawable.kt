@@ -47,12 +47,17 @@ internal class BackgroundImageDrawable(
   private var backgroundPositioningArea: RectF? = null
   private var backgroundPaintingArea: RectF? = null
   private val backgroundImageURLLoader = BackgroundImageURLLoader(context) { invalidateSelf() }
+  private var needsBackgroundImageURLRequests = false
 
   var backgroundImageLayers: List<BackgroundImageLayer>? = null
     set(value) {
       if (field != value) {
         field = value
-        updateBackgroundImageURLRequests()
+        if (isVisible) {
+          updateBackgroundImageURLRequests()
+        } else {
+          needsBackgroundImageURLRequests = true
+        }
         invalidateSelf()
       }
     }
@@ -82,7 +87,7 @@ internal class BackgroundImageDrawable(
     }
 
   private val backgroundPaint: Paint =
-      Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+      Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { style = Paint.Style.FILL }
 
   override fun invalidateSelf() {
     needUpdatePath = true
@@ -102,6 +107,7 @@ internal class BackgroundImageDrawable(
         updateBackgroundImageURLRequests()
       } else {
         backgroundImageURLLoader.cancelPendingRequests()
+        needsBackgroundImageURLRequests = true
       }
     }
     return changed
@@ -127,6 +133,10 @@ internal class BackgroundImageDrawable(
   }
 
   override fun draw(canvas: Canvas) {
+    if (needsBackgroundImageURLRequests) {
+      updateBackgroundImageURLRequests()
+    }
+
     if (backgroundImageLayers.isNullOrEmpty()) {
       return
     }
@@ -156,30 +166,28 @@ internal class BackgroundImageDrawable(
         val position =
             backgroundPosition?.takeIf { it.isNotEmpty() }?.let { it.getOrNull(index % it.size) }
 
+        val uri = backgroundImageLayer.uri
         val urlImage: Bitmap?
         val (intrinsicWidth, intrinsicHeight) =
-            when (backgroundImageLayer) {
-              is BackgroundImageLayer.GradientLayer -> {
-                urlImage = null
-                backgroundPositioningArea.width() to backgroundPositioningArea.height()
+            if (uri == null) {
+              urlImage = null
+              backgroundPositioningArea.width() to backgroundPositioningArea.height()
+            } else {
+              val image = backgroundImageURLLoader.imageForUri(uri)
+              if (image == null) {
+                continue
               }
-              is BackgroundImageLayer.URLImageLayer -> {
-                val image = backgroundImageURLLoader.imageForUri(backgroundImageLayer.uri)
-                if (image == null) {
-                  continue
-                }
-                urlImage = image
-                // Asset (local require() assets) pass intrinsicWidth/Height in DIPs
-                // So use those dimensions and convert from dp to physical pixels.
-                val assetWidth = backgroundImageLayer.intrinsicWidth
-                val assetHeight = backgroundImageLayer.intrinsicHeight
-                if (assetWidth != null && assetHeight != null) {
-                  assetWidth.dpToPx() to assetHeight.dpToPx()
-                } else {
-                  // Plain url() images don't pass intrinsic width/height
-                  // so take the decoded pixels as DIPs and convert
-                  image.width.toFloat().dpToPx() to image.height.toFloat().dpToPx()
-                }
+              urlImage = image.bitmap
+              // Asset (local require() assets) pass intrinsicWidth/Height in DIPs
+              // So use those dimensions and convert from dp to physical pixels.
+              val assetWidth = backgroundImageLayer.intrinsicWidth
+              val assetHeight = backgroundImageLayer.intrinsicHeight
+              if (assetWidth != null && assetHeight != null) {
+                assetWidth.dpToPx() to assetHeight.dpToPx()
+              } else {
+                // Plain url() images don't pass intrinsic width/height
+                // so take the natural pixels as DIPs and convert
+                image.width.toFloat().dpToPx() to image.height.toFloat().dpToPx()
               }
             }
 
@@ -190,7 +198,7 @@ internal class BackgroundImageDrawable(
                 backgroundPositioningArea.height(),
                 intrinsicWidth,
                 intrinsicHeight,
-                backgroundImageLayer is BackgroundImageLayer.URLImageLayer,
+                uri != null,
                 size,
                 repeat,
             )
@@ -200,7 +208,7 @@ internal class BackgroundImageDrawable(
         }
 
         // 3. Set paint shader for gradients (URL images don't use shaders)
-        if (backgroundImageLayer is BackgroundImageLayer.GradientLayer) {
+        if (uri == null) {
           backgroundPaint.setShader(backgroundImageLayer.getShader(tileWidth, tileHeight))
         } else {
           backgroundPaint.setShader(null)
@@ -296,6 +304,8 @@ internal class BackgroundImageDrawable(
         }
 
         // 5. draw the repeating tiles using translate
+        val srcRect = urlImage?.let { Rect(0, 0, it.width, it.height) }
+        val dstRect = RectF(0f, 0f, tileWidth, tileHeight)
         var translateX = initialX
         var translateY: Float
         repeat(xTilesCount) {
@@ -304,8 +314,6 @@ internal class BackgroundImageDrawable(
             canvas.save()
             canvas.translate(translateX, translateY)
             if (urlImage != null) {
-              val srcRect = Rect(0, 0, urlImage.width, urlImage.height)
-              val dstRect = RectF(0f, 0f, tileWidth, tileHeight)
               canvas.drawBitmap(urlImage, srcRect, dstRect, backgroundPaint)
             } else {
               canvas.drawRect(0f, 0f, tileWidth, tileHeight, backgroundPaint)
@@ -500,6 +508,7 @@ internal class BackgroundImageDrawable(
   }
 
   private fun updateBackgroundImageURLRequests() {
+    needsBackgroundImageURLRequests = false
     backgroundImageURLLoader.loadBackgroundImages(backgroundImageLayers.orEmpty())
   }
 }
