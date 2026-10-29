@@ -18,6 +18,20 @@
 
 using namespace facebook::react;
 
+// Layers draw the `CGImage`, which ignores `imageOrientation`.
+static UIImage *RCTUprightImage(UIImage *image)
+{
+  if (image.imageOrientation == UIImageOrientationUp) {
+    return image;
+  }
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+  format.scale = image.scale;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:image.size format:format];
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    [image drawInRect:CGRectMake(0, 0, image.size.width, image.size.height)];
+  }];
+}
+
 /*
  * The image for one uri. It is the delegate of its own observer proxy. A
  * callback that is queued on the main queue retains it, so the callback
@@ -85,7 +99,7 @@ using namespace facebook::react;
   if (_cancelled) {
     return;
   }
-  _image = image;
+  _image = RCTUprightImage(image);
   _onLoad();
 }
 
