@@ -96,7 +96,7 @@ const NSInteger RCTComponentViewRegistryRecyclePoolMaxSize = 1024;
   if (recycledViews.empty()) {
     auto componentViewDescriptor = [self.componentViewFactory createComponentViewWithComponentHandle:componentHandle];
     if (_imageManager && [componentViewDescriptor.view isKindOfClass:[RCTViewComponentView class]]) {
-      [(RCTViewComponentView *)componentViewDescriptor.view setImageManager:_imageManager];
+      [(RCTViewComponentView *)componentViewDescriptor.view setBackgroundImageManager:_imageManager];
     }
     return componentViewDescriptor;
   }

@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Used to load the `url()` entries of `backgroundImage`.
  * Set by `RCTComponentViewRegistry` when it creates the view.
  */
-- (void)setImageManager:(std::shared_ptr<facebook::react::ImageManager>)imageManager;
+- (void)setBackgroundImageManager:(std::shared_ptr<facebook::react::ImageManager>)imageManager;
 
 /**
  * Enforcing `call super` semantic for overridden methods from `RCTComponentViewProtocol`.

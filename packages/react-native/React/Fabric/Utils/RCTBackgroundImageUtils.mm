@@ -150,6 +150,7 @@
 
 + (CGSize)calculateBackgroundImageSize:(const CGRect &)positioningArea
                      itemIntrinsicSize:(CGSize)itemIntrinsicSize
+                 itemHasIntrinsicRatio:(BOOL)itemHasIntrinsicRatio
                         backgroundSize:(const facebook::react::BackgroundSize &)backgroundSize
                       backgroundRepeat:(const facebook::react::BackgroundRepeat &)backgroundRepeat
 {
@@ -159,9 +160,13 @@
 
   CGSize itemFinalSize = itemIntrinsicSize;
   CGSize positioningAreaSize = positioningArea.size;
+  bool xAuto = true;
+  bool yAuto = true;
 
   if (std::holds_alternative<facebook::react::BackgroundSizeLengthPercentage>(backgroundSize)) {
     auto backgroundSizeLengthPercentage = std::get<facebook::react::BackgroundSizeLengthPercentage>(backgroundSize);
+    xAuto = backgroundSizeLengthPercentage.isXAuto();
+    yAuto = backgroundSizeLengthPercentage.isYAuto();
     if (std::holds_alternative<facebook::react::ValueUnit>(backgroundSizeLengthPercentage.x)) {
       auto xValue = std::get<facebook::react::ValueUnit>(backgroundSizeLengthPercentage.x);
       if (xValue.unit == facebook::react::UnitType::Percent) {
@@ -179,6 +184,15 @@
         itemFinalSize.height = yValue.value;
       }
     }
+  }
+
+  // An `auto` dimension keeps the image's aspect ratio. Without a ratio (gradients), it stays at its intrinsic size.
+  bool keepsRatio = itemHasIntrinsicRatio && itemIntrinsicSize.width > 0 && itemIntrinsicSize.height > 0;
+  CGFloat ratio = keepsRatio ? itemIntrinsicSize.width / itemIntrinsicSize.height : 0;
+  if (keepsRatio && !xAuto && yAuto) {
+    itemFinalSize.height = itemFinalSize.width / ratio;
+  } else if (keepsRatio && xAuto && !yAuto) {
+    itemFinalSize.width = itemFinalSize.height * ratio;
   }
 
   if (backgroundRepeat.x == facebook::react::BackgroundRepeatStyle::Round) {
@@ -201,6 +215,15 @@
         }
       }
     }
+  }
+
+  // With `round` on one axis only, an `auto` other axis is scaled again to restore the ratio.
+  bool roundX = backgroundRepeat.x == facebook::react::BackgroundRepeatStyle::Round;
+  bool roundY = backgroundRepeat.y == facebook::react::BackgroundRepeatStyle::Round;
+  if (keepsRatio && roundX && !roundY && yAuto) {
+    itemFinalSize.height = itemFinalSize.width / ratio;
+  } else if (keepsRatio && roundY && !roundX && xAuto) {
+    itemFinalSize.width = itemFinalSize.height * ratio;
   }
 
   return itemFinalSize;

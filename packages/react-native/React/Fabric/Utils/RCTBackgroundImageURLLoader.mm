@@ -19,13 +19,8 @@
 using namespace facebook::react;
 
 // Layers draw the `CGImage`, which ignores `imageOrientation`.
-static UIImage *RCTUprightImage(UIImage *image)
+static UIImage *RCTUprightImage(UIImage *image, UIGraphicsImageRendererFormat *format)
 {
-  if (image.imageOrientation == UIImageOrientationUp) {
-    return image;
-  }
-  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
-  format.scale = image.scale;
   UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:image.size format:format];
   return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
     [image drawInRect:CGRectMake(0, 0, image.size.width, image.size.height)];
@@ -99,8 +94,27 @@ static UIImage *RCTUprightImage(UIImage *image)
   if (_cancelled) {
     return;
   }
-  _image = RCTUprightImage(image);
-  _onLoad();
+  if (image.imageOrientation == UIImageOrientationUp) {
+    _image = image;
+    _onLoad();
+    return;
+  }
+
+  // Redrawing a full-size photo is slow, so do it off the main queue.
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+  format.scale = image.scale;
+  __weak RCTBackgroundImageURLEntry *weakSelf = self;
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    UIImage *uprightImage = RCTUprightImage(image, format);
+    dispatch_async(dispatch_get_main_queue(), ^{
+      RCTBackgroundImageURLEntry *strongSelf = weakSelf;
+      if (strongSelf == nil || strongSelf->_cancelled) {
+        return;
+      }
+      strongSelf->_image = uprightImage;
+      strongSelf->_onLoad();
+    });
+  });
 }
 
 - (void)didReceiveProgress:(float)progress

@@ -13,6 +13,7 @@
 
 + (CGSize)calculateBackgroundImageSize:(const CGRect &)positioningArea
                      itemIntrinsicSize:(CGSize)itemIntrinsicSize
+                 itemHasIntrinsicRatio:(BOOL)itemHasIntrinsicRatio
                         backgroundSize:(const facebook::react::BackgroundSize &)backgroundSize
                       backgroundRepeat:(const facebook::react::BackgroundRepeat &)backgroundRepeat;
 

@@ -1428,6 +1428,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
       }
 
       CGSize itemIntrinsicSize = backgroundPositioningArea.size;
+      BOOL itemHasIntrinsicRatio = NO;
       UIImage *urlImage = nil;
       if (const auto *urlBackgroundImage = std::get_if<URLBackgroundImage>(&backgroundImage)) {
         urlImage = [_backgroundImageURLLoader imageForURI:urlBackgroundImage->uri];
@@ -1435,13 +1436,16 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
         // has none, so use the size of the decoded image.
         if (urlBackgroundImage->intrinsicWidth > 0 && urlBackgroundImage->intrinsicHeight > 0) {
           itemIntrinsicSize = CGSizeMake(urlBackgroundImage->intrinsicWidth, urlBackgroundImage->intrinsicHeight);
+          itemHasIntrinsicRatio = YES;
         } else if (urlImage != nil) {
           itemIntrinsicSize = urlImage.size;
+          itemHasIntrinsicRatio = YES;
         }
       }
 
       CGSize backgroundImageSize = [RCTBackgroundImageUtils calculateBackgroundImageSize:backgroundPositioningArea
                                                                        itemIntrinsicSize:itemIntrinsicSize
+                                                                   itemHasIntrinsicRatio:itemHasIntrinsicRatio
                                                                           backgroundSize:backgroundSize
                                                                         backgroundRepeat:backgroundRepeat];
 
@@ -1568,7 +1572,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   return maskLayer;
 }
 
-- (void)setImageManager:(std::shared_ptr<ImageManager>)imageManager
+- (void)setBackgroundImageManager:(std::shared_ptr<ImageManager>)imageManager
 {
   _imageManager = std::move(imageManager);
 }
