@@ -177,7 +177,7 @@ internal class BackgroundImageDrawable(
               if (image == null) {
                 continue
               }
-              urlImage = image.bitmap
+              urlImage = image
               // Asset (local require() assets) pass intrinsicWidth/Height in DIPs
               // So use those dimensions and convert from dp to physical pixels.
               val assetWidth = backgroundImageLayer.intrinsicWidth
@@ -186,7 +186,7 @@ internal class BackgroundImageDrawable(
                 assetWidth.dpToPx() to assetHeight.dpToPx()
               } else {
                 // Plain url() images don't pass intrinsic width/height
-                // so take the natural pixels as DIPs and convert
+                // so take the decoded pixels as DIPs and convert
                 image.width.toFloat().dpToPx() to image.height.toFloat().dpToPx()
               }
             }

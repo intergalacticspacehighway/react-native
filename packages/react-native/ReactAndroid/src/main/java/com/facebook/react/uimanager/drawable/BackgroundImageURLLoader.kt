@@ -16,10 +16,7 @@ import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.BaseDataSubscriber
 import com.facebook.datasource.DataSource
 import com.facebook.drawee.backends.pipeline.Fresco
-import com.facebook.fresco.middleware.HasExtraData
 import com.facebook.imagepipeline.common.ImageDecodeOptions
-import com.facebook.imagepipeline.common.ResizeOptions
-import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.image.CloseableImage
 import com.facebook.imagepipeline.image.CloseableStaticBitmap
 import com.facebook.imagepipeline.request.ImageRequestBuilder
@@ -38,16 +35,7 @@ internal class BackgroundImageURLLoader(
     private val onLoad: () -> Unit,
 ) {
 
-  /** A loaded image. [width] and [height] are its natural size in pixels, before downsampling. */
-  class LoadedImage(val bitmap: Bitmap, val width: Int, val height: Int)
-
   private var entries: List<Entry> = emptyList()
-
-  private val resizeOptions =
-      context.resources.displayMetrics.let {
-        val maxSize = maxOf(it.widthPixels, it.heightPixels)
-        ResizeOptions(maxSize, maxSize)
-      }
 
   /**
    * Requests every `url()` layer in [backgroundImageLayers]. Does nothing if the uris did not
@@ -83,10 +71,10 @@ internal class BackgroundImageURLLoader(
   }
 
   /** Returns null until the image for [uri] has loaded. */
-  fun imageForUri(uri: String): LoadedImage? = entries.find { it.uri == uri }?.image
+  fun imageForUri(uri: String): Bitmap? = entries.find { it.uri == uri }?.image
 
   private inner class Entry(val uri: String) {
-    var image: LoadedImage? = null
+    var image: Bitmap? = null
       private set
 
     private var dataSource: DataSource<CloseableReference<CloseableImage>>? = null
@@ -95,12 +83,6 @@ internal class BackgroundImageURLLoader(
     fun start() {
       val imageRequest =
           ImageRequestBuilder.newBuilderWithSource(ImageSource(context, uri).uri)
-              .setResizeOptions(resizeOptions)
-              // Downsample while decoding instead of resizing the encoded image, so the encoded
-              // size
-              // stays the natural size.
-              .setDownsampleOverride(DownsampleMode.ALWAYS)
-              .setResizingAllowedOverride(false)
               // Like iOS, animated images show their first frame.
               .setImageDecodeOptions(
                   ImageDecodeOptions.newBuilder().setForceStaticImage(true).build()
@@ -121,7 +103,7 @@ internal class BackgroundImageURLLoader(
               // copy.
               val uprightImage =
                   try {
-                    (imageReference.get() as? CloseableStaticBitmap)?.let { loadedImage(it) }
+                    (imageReference.get() as? CloseableStaticBitmap)?.let { uprightImage(it) }
                   } finally {
                     CloseableReference.closeSafely(imageReference)
                   }
@@ -157,25 +139,6 @@ internal class BackgroundImageURLLoader(
   }
 
   private companion object {
-    fun loadedImage(image: CloseableStaticBitmap): LoadedImage? {
-      val bitmap = uprightImage(image) ?: return null
-      // The decode can be downsampled, so take the natural size from the encoded image. It is the
-      // size before EXIF rotation, so swap it when the upright bitmap is rotated.
-      val encodedWidth = image.extras[HasExtraData.KEY_ENCODED_WIDTH] as? Int ?: -1
-      val encodedHeight = image.extras[HasExtraData.KEY_ENCODED_HEIGHT] as? Int ?: -1
-      if (encodedWidth <= 0 || encodedHeight <= 0) {
-        return LoadedImage(bitmap, bitmap.width, bitmap.height)
-      }
-      val rotated =
-          bitmap.width != bitmap.height &&
-              (bitmap.width > bitmap.height) != (encodedWidth > encodedHeight)
-      return if (rotated) {
-        LoadedImage(bitmap, encodedHeight, encodedWidth)
-      } else {
-        LoadedImage(bitmap, encodedWidth, encodedHeight)
-      }
-    }
-
     /**
      * Copies the decoded bitmap with its EXIF orientation applied. The pipeline only reports the
      * orientation, and Fresco's drawee applies it when it draws, in the same way as below.
