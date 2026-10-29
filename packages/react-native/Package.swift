@@ -467,7 +467,6 @@ let reactCore = RNTarget(
 let reactFabric = RNTarget(
   name: .reactFabric,
   path: "ReactCommon/react/renderer",
-  searchPaths: ["ReactCommon/react/renderer/imagemanager/platform/ios"],
   excludedPaths: [
     "animated/tests",
     "animationbackend/tests",

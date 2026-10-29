@@ -15,7 +15,9 @@
 #import <React/RCTUtils.h>
 #import <cxxreact/TraceSection.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
+#import <react/renderer/components/image/ImageComponentDescriptor.h>
 #import <react/renderer/components/root/RootShadowNode.h>
+#import <react/renderer/core/ConcreteComponentDescriptor.h>
 #import <react/renderer/core/LayoutableShadowNode.h>
 #import <react/renderer/core/RawProps.h>
 #import <react/renderer/mounting/TelemetryController.h>
@@ -159,6 +161,11 @@ static void RCTPerformMountInstructions(
 - (void)setContextContainer:(std::shared_ptr<const ContextContainer>)contextContainer
 {
   _contextContainer = contextContainer;
+
+  // `ImageManager` requires the image loader, which some hosts do not provide.
+  if (_contextContainer && _contextContainer->find<std::shared_ptr<void>>("RCTImageLoader").has_value()) {
+    [_componentViewRegistry setImageManager:getManagerByName<ImageManager>(_contextContainer, ImageManagerKey)];
+  }
 }
 
 - (void)attachSurfaceToView:(UIView *)view surfaceId:(SurfaceId)surfaceId

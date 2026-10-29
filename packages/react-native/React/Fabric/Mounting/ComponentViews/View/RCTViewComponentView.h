@@ -14,14 +14,18 @@
 #import <React/UIView+ComponentViewProtocol.h>
 #import <React/View.h>
 
-#import "RCTBackgroundImageURLLoader.h"
+#include <memory>
+
+namespace facebook::react {
+class ImageManager;
+} // namespace facebook::react
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
  * UIView class for <View> component.
  */
-@interface RCTViewComponentView : UIView <RCTComponentViewProtocol, RCTTouchableComponentViewProtocol, RCTBackgroundImageURLLoaderDelegate> {
+@interface RCTViewComponentView : UIView <RCTComponentViewProtocol, RCTTouchableComponentViewProtocol> {
  @protected
   facebook::react::LayoutMetrics _layoutMetrics;
   facebook::react::SharedViewProps _props;
@@ -61,6 +65,12 @@ NS_ASSUME_NONNULL_BEGIN
  * Insets used when hit testing inside this view.
  */
 @property (nonatomic, assign) UIEdgeInsets hitTestEdgeInsets;
+
+/**
+ * Used to load the `url()` entries of `backgroundImage`.
+ * Set by `RCTComponentViewRegistry` when it creates the view.
+ */
+- (void)setImageManager:(std::shared_ptr<facebook::react::ImageManager>)imageManager;
 
 /**
  * Enforcing `call super` semantic for overridden methods from `RCTComponentViewProtocol`.
