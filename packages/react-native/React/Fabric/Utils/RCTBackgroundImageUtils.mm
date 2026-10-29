@@ -198,10 +198,9 @@
   if (backgroundRepeat.x == facebook::react::BackgroundRepeatStyle::Round) {
     if (itemFinalSize.width > 0 && positioningAreaSize.width > 0) {
       if (fmod(positioningAreaSize.width, itemFinalSize.width) != 0) {
-        auto divisor = static_cast<float>(round(positioningAreaSize.width / itemFinalSize.width));
-        if (divisor > 0) {
-          itemFinalSize.width = positioningAreaSize.width / divisor;
-        }
+        // CSS rounds to the nearest whole number of tiles, but at least one.
+        CGFloat divisor = std::max<CGFloat>(1, round(positioningAreaSize.width / itemFinalSize.width));
+        itemFinalSize.width = positioningAreaSize.width / divisor;
       }
     }
   }
@@ -209,10 +208,9 @@
   if (backgroundRepeat.y == facebook::react::BackgroundRepeatStyle::Round) {
     if (itemFinalSize.height > 0 && positioningAreaSize.height > 0) {
       if (fmod(positioningAreaSize.height, itemFinalSize.height) != 0) {
-        auto divisor = static_cast<float>(round(positioningAreaSize.height / itemFinalSize.height));
-        if (divisor > 0) {
-          itemFinalSize.height = positioningAreaSize.height / divisor;
-        }
+        // CSS rounds to the nearest whole number of tiles, but at least one.
+        CGFloat divisor = std::max<CGFloat>(1, round(positioningAreaSize.height / itemFinalSize.height));
+        itemFinalSize.height = positioningAreaSize.height / divisor;
       }
     }
   }
