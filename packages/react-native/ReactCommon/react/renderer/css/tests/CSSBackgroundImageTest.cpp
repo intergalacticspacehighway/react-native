@@ -637,12 +637,14 @@ TEST_F(CSSBackgroundImageTest, URLMixedWithGradients) {
 
 TEST_F(CSSBackgroundImageTest, URLEmpty) {
   auto result = parseCSSProperty<CSSBackgroundImage>("url()");
-  ASSERT_TRUE(std::holds_alternative<std::monostate>(result));
+  decltype(result) expected = CSSURLFunction{.url = ""};
+  ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLEmptyQuoted) {
   auto result = parseCSSProperty<CSSBackgroundImage>("url(\"\")");
-  ASSERT_TRUE(std::holds_alternative<std::monostate>(result));
+  decltype(result) expected = CSSURLFunction{.url = ""};
+  ASSERT_EQ(result, expected);
 }
 
 TEST_F(CSSBackgroundImageTest, URLWithPort) {

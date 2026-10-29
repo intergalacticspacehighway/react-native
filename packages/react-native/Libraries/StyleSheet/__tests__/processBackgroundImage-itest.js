@@ -1299,19 +1299,35 @@ describe('processBackgroundImage', () => {
     ]);
   });
 
-  it('should return empty for url empty', () => {
-    const result = processBackgroundImage('url()');
-    expect(result).toEqual([]);
+  // An empty url is valid CSS. It draws nothing, but it stays a layer, so the
+  // other layers and their background sizes and positions keep their index.
+  it('should keep an empty url as a layer', () => {
+    expect(processBackgroundImage('url()')).toEqual([{type: 'url', uri: ''}]);
   });
 
-  it('should return empty for url empty quoted', () => {
-    const result = processBackgroundImage('url("")');
-    expect(result).toEqual([]);
+  it('should keep an empty quoted url as a layer', () => {
+    expect(processBackgroundImage('url("")')).toEqual([{type: 'url', uri: ''}]);
   });
 
-  it('should return empty for an empty uri in the object syntax', () => {
-    const result = processBackgroundImage([{type: 'url', uri: ''}]);
-    expect(result).toEqual([]);
+  it('should keep an empty uri in the object syntax as a layer', () => {
+    expect(processBackgroundImage([{type: 'url', uri: ''}])).toEqual([
+      {type: 'url', uri: ''},
+    ]);
+  });
+
+  it('should keep the other layers next to an empty url', () => {
+    const result = processBackgroundImage(
+      'url(""), linear-gradient(red, blue)',
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({type: 'url', uri: ''});
+    expect(result[1].type).toBe('linear-gradient');
+  });
+
+  it('should return empty when one url is invalid', () => {
+    expect(
+      processBackgroundImage('url(my photo.png), linear-gradient(red, blue)'),
+    ).toEqual([]);
   });
 
   it('should keep parentheses inside a quoted url', () => {

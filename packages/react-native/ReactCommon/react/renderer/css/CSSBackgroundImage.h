@@ -833,7 +833,7 @@ template <>
 struct CSSDataTypeParser<CSSURLFunction> {
   static auto consumePreservedToken(const CSSPreservedToken &token) -> std::optional<CSSURLFunction>
   {
-    if (token.type() != CSSTokenType::Url || token.stringValue().empty()) {
+    if (token.type() != CSSTokenType::Url) {
       return {};
     }
 
@@ -861,7 +861,7 @@ struct CSSDataTypeParser<CSSURLFunction> {
           return std::string(token.stringValue());
         });
 
-    if (!url.has_value() || url->empty()) {
+    if (!url.has_value()) {
       return {};
     }
 

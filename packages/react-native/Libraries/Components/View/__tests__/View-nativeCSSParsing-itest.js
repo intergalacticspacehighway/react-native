@@ -11,6 +11,8 @@
 
 import '@react-native/fantom/src/setUpDefaultReactNativeEnvironment';
 
+import type {BackgroundImageValue} from '../../../StyleSheet/StyleSheetTypes';
+
 import * as Fantom from '@react-native/fantom';
 import * as React from 'react';
 import {View} from 'react-native';
@@ -72,10 +74,44 @@ describe('<View> native CSS parsing', () => {
       expect(backgroundImage).toContain('rgba(230, 100, 101, 1)');
     });
 
-    it('drops a url layer with an empty uri', () => {
+    it('keeps a url layer with an empty uri, like web', () => {
       expect(
         mountedProp(
           {backgroundImage: [{type: 'url', uri: ''}]},
+          'backgroundImage',
+        ),
+      ).toBe('[url()]');
+      const backgroundImage = mountedProp(
+        {backgroundImage: 'url(""), linear-gradient(red, blue)'},
+        'backgroundImage',
+      );
+      expect(backgroundImage).toContain('url()');
+      expect(backgroundImage).toContain('linear-gradient');
+    });
+
+    it('drops the whole list when a url layer is invalid, like web', () => {
+      const gradient: BackgroundImageValue = {
+        type: 'linear-gradient',
+        direction: 'to bottom',
+        colorStops: [
+          {color: 'red', positions: ['0%']},
+          {color: 'blue', positions: ['100%']},
+        ],
+      };
+      expect(
+        mountedProp({backgroundImage: [gradient]}, 'backgroundImage'),
+      ).toContain('linear-gradient');
+      // An asset number that the asset registry does not know stays a number,
+      // which is not a valid uri.
+      expect(
+        mountedProp(
+          {backgroundImage: [{type: 'url', uri: 999999}, gradient]},
+          'backgroundImage',
+        ),
+      ).toBeUndefined();
+      expect(
+        mountedProp(
+          {backgroundImage: 'url(my photo.png), linear-gradient(red, blue)'},
           'backgroundImage',
         ),
       ).toBeUndefined();

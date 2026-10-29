@@ -111,7 +111,7 @@ export function processBackgroundImageAssets(
 
 function processURLBackgroundImage(uri: number | string): ?URLBackgroundImage {
   if (typeof uri === 'string') {
-    return uri.length > 0 ? {type: 'url', uri} : null;
+    return {type: 'url', uri};
   }
   const source = resolveAssetSource(uri);
   if (source == null || source.uri == null) {
@@ -329,14 +329,17 @@ function parseBackgroundImageCSSString(
   for (const bgImageString of bgImageStrings) {
     if (URL_FUNCTION_REGEX.test(bgImageString)) {
       const uri = parseURLFunctionBody(bgImageString.slice('url('.length));
-      if (uri != null && uri.length > 0) {
-        // A url() in a css string is not an asset, so its natural size is only
-        // known once the image is decoded.
-        backgroundImages.push({
-          type: 'url',
-          uri,
-        });
+      if (uri == null) {
+        // An invalid url makes the whole list invalid. Same as web.
+        return [];
       }
+      // A url() in a css string is not an asset, so its natural size is only
+      // known once the image is decoded. An empty url stays as a layer that
+      // draws nothing. Same as web.
+      backgroundImages.push({
+        type: 'url',
+        uri,
+      });
       continue;
     }
 

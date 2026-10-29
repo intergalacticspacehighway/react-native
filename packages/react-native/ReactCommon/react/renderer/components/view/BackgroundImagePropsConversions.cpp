@@ -25,7 +25,8 @@ namespace facebook::react {
 using RawValueMap = std::unordered_map<std::string, RawValue>;
 using RawValueList = std::vector<RawValue>;
 
-// Returns nothing for a missing, non-string, or empty uri.
+// Returns nothing for a missing or non-string uri. An empty uri stays as a
+// layer that draws nothing, like `url("")` on the web.
 static std::optional<URLBackgroundImage> parseURLBackgroundImage(
     const RawValueMap& rawBackgroundImageMap) {
   auto uriIt = rawBackgroundImageMap.find("uri");
@@ -35,9 +36,6 @@ static std::optional<URLBackgroundImage> parseURLBackgroundImage(
   }
   URLBackgroundImage urlBackgroundImage;
   urlBackgroundImage.uri = (std::string)(uriIt->second);
-  if (urlBackgroundImage.uri.empty()) {
-    return std::nullopt;
-  }
   auto widthIt = rawBackgroundImageMap.find("intrinsicWidth");
   if (widthIt != rawBackgroundImageMap.end() &&
       widthIt->second.hasType<Float>()) {
@@ -235,10 +233,12 @@ void parseProcessedBackgroundImage(
 
       backgroundImage.emplace_back(std::move(radialGradient));
     } else if (type == "url") {
-      if (auto urlBackgroundImage =
-              parseURLBackgroundImage(rawBackgroundImageMap)) {
-        backgroundImage.emplace_back(std::move(*urlBackgroundImage));
+      auto urlBackgroundImage = parseURLBackgroundImage(rawBackgroundImageMap);
+      if (!urlBackgroundImage) {
+        result = {};
+        return;
       }
+      backgroundImage.emplace_back(std::move(*urlBackgroundImage));
     }
   }
 
@@ -441,10 +441,12 @@ void parseUnprocessedBackgroundImageList(
 
       backgroundImage.emplace_back(std::move(radialGradient));
     } else if (type == "url") {
-      if (auto urlBackgroundImage =
-              parseURLBackgroundImage(rawBackgroundImageMap)) {
-        backgroundImage.emplace_back(std::move(*urlBackgroundImage));
+      auto urlBackgroundImage = parseURLBackgroundImage(rawBackgroundImageMap);
+      if (!urlBackgroundImage) {
+        result = {};
+        return;
       }
+      backgroundImage.emplace_back(std::move(*urlBackgroundImage));
     }
   }
 
