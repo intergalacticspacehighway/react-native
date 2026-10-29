@@ -1377,16 +1377,24 @@ describe('processBackgroundImage', () => {
     });
   }
 
-  for (const [name, backgroundImage, uri] of [
-    ['an escaped parenthesis', 'url(a\\)b.png)', 'a)b.png'],
-    ['an escaped quote in a quoted url', 'url("a\\"b.png")', 'a"b.png'],
-    ['a hex escape', 'url(a\\20 b.png)', 'a b.png'],
-    ['a missing closing parenthesis', 'url(a.png', 'a.png'],
+  it('should parse a url with a missing closing parenthesis', () => {
+    expect(processBackgroundImage('url(a.png')).toEqual([
+      {type: 'url', uri: 'a.png'},
+    ]);
+  });
+
+  it('should keep a backslash in a quoted url', () => {
+    expect(processBackgroundImage('url("a\\20b.png")')).toEqual([
+      {type: 'url', uri: 'a\\20b.png'},
+    ]);
+  });
+
+  for (const [name, backgroundImage] of [
+    ['an escaped parenthesis', 'url(a\\)b.png)'],
+    ['an escaped quote in a quoted url', 'url("a\\"b.png")'],
   ]) {
-    it(`should parse a url with ${name}`, () => {
-      expect(processBackgroundImage(backgroundImage)).toEqual([
-        {type: 'url', uri},
-      ]);
+    it(`should return empty for ${name}`, () => {
+      expect(processBackgroundImage(backgroundImage)).toEqual([]);
     });
   }
 });

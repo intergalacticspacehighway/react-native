@@ -403,20 +403,6 @@ function parseURLFunctionBody(input: string): ?string {
         i++;
         break;
       }
-      if (char === '\\') {
-        if (i + 1 < input.length && isCSSNewline(input[i + 1])) {
-          // An escaped newline is skipped.
-          i += 2;
-          continue;
-        }
-        if (i + 1 >= input.length) {
-          return null;
-        }
-        const [codePoint, length] = consumeCSSEscape(input, i + 1);
-        uri += codePoint;
-        i += 1 + length;
-        continue;
-      }
       uri += char;
       i++;
     }
@@ -448,47 +434,11 @@ function parseURLFunctionBody(input: string): ?string {
     ) {
       return null;
     }
-    if (char === '\\') {
-      if (i + 1 >= input.length || isCSSNewline(input[i + 1])) {
-        return null;
-      }
-      const [codePoint, length] = consumeCSSEscape(input, i + 1);
-      uri += codePoint;
-      i += 1 + length;
-      continue;
-    }
     uri += char;
     i++;
   }
   // A missing `)` at the end is a parse error, but the url is kept.
   return uri;
-}
-
-// https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
-// `start` is the index after the backslash. Returns the code point and the
-// number of characters it used.
-function consumeCSSEscape(input: string, start: number): [string, number] {
-  let i = start;
-  let hex = '';
-  while (i < input.length && hex.length < 6 && /[0-9a-fA-F]/.test(input[i])) {
-    hex += input[i];
-    i++;
-  }
-  if (hex.length === 0) {
-    return [input[start], 1];
-  }
-  if (i < input.length && isCSSWhitespace(input[i])) {
-    i++;
-  }
-  let codePoint = parseInt(hex, 16);
-  if (
-    codePoint === 0 ||
-    (codePoint >= 0xd800 && codePoint <= 0xdfff) ||
-    codePoint > 0x10ffff
-  ) {
-    codePoint = 0xfffd;
-  }
-  return [String.fromCodePoint(codePoint), i - start];
 }
 
 function parseRadialGradientCSSString(
