@@ -481,4 +481,28 @@ exports.examples = [
       );
     },
   },
+  {
+    title: 'URL Image from local file at its natural size',
+    name: 'local-image-natural-size',
+    description:
+      'A @3x asset draws at its size in points (33x33), not at its pixel size (99x99).',
+    render(): React.Node {
+      return (
+        <BackgroundImageBox
+          style={{
+            width: 99,
+            height: 99,
+            backgroundImage: [
+              {
+                type: 'url',
+                uri: require('../../assets/flux.png'),
+              },
+            ],
+            backgroundRepeat: 'no-repeat',
+          }}
+          testID="background-image-local-natural-size"
+        />
+      );
+    },
+  },
 ] as Array<RNTesterModuleExample>;
