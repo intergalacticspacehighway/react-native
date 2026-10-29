@@ -71,5 +71,23 @@ describe('<View> native CSS parsing', () => {
       expect(backgroundImage).toContain('linear-gradient');
       expect(backgroundImage).toContain('rgba(230, 100, 101, 1)');
     });
+
+    it('resolves a require() asset in the object syntax', () => {
+      expect(
+        mountedProp(
+          {
+            backgroundImage: [
+              {
+                type: 'url',
+                uri: require('../../../Image/__tests__/img/img1.png'),
+              },
+            ],
+          },
+          'backgroundImage',
+        ),
+      ).toBe(
+        '[url(file://drawable-mdpi/packages_reactnative_libraries_image___tests___img_img1.png)]',
+      );
+    });
   });
 });

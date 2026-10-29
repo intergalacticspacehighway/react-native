@@ -92,6 +92,45 @@ type ParsedBackgroundImageValue =
   | RadialGradientBackgroundImage
   | URLBackgroundImage;
 
+/**
+ * With native CSS parsing, native code parses `backgroundImage` but cannot
+ * resolve a `require()` asset, so this resolves only those.
+ */
+export function processBackgroundImageAssets(
+  backgroundImage: ?(ReadonlyArray<BackgroundImageValue> | string),
+): ?(ReadonlyArray<BackgroundImageValue | URLBackgroundImage> | string) {
+  if (!Array.isArray(backgroundImage)) {
+    return backgroundImage;
+  }
+  return backgroundImage.map(bgImage =>
+    bgImage.type === 'url' && typeof bgImage.uri === 'number'
+      ? (processURLBackgroundImage(bgImage.uri) ?? bgImage)
+      : bgImage,
+  );
+}
+
+function processURLBackgroundImage(uri: number | string): ?URLBackgroundImage {
+  if (typeof uri === 'string') {
+    return {type: 'url', uri};
+  }
+  const source = resolveAssetSource(uri);
+  if (source == null || source.uri == null) {
+    return null;
+  }
+  // The asset registry records these already divided by the asset's scale, so
+  // they are layout units and need no density maths native side. Matches how
+  // `Image` derives its default dimensions. The registry reports both
+  // dimensions or neither.
+  return typeof source.width === 'number' && typeof source.height === 'number'
+    ? {
+        type: 'url',
+        uri: source.uri,
+        intrinsicWidth: source.width,
+        intrinsicHeight: source.height,
+      }
+    : {type: 'url', uri: source.uri};
+}
+
 export default function processBackgroundImage(
   backgroundImage: ?(ReadonlyArray<BackgroundImageValue> | string),
 ): ReadonlyArray<ParsedBackgroundImageValue> {
@@ -107,38 +146,13 @@ export default function processBackgroundImage(
   } else if (Array.isArray(backgroundImage)) {
     for (const bgImage of backgroundImage) {
       if (bgImage.type === 'url') {
-        let uri: ?string = null;
-        let intrinsicWidth: ?number = null;
-        let intrinsicHeight: ?number = null;
-        if (typeof bgImage.uri === 'string') {
-          uri = bgImage.uri;
-        } else if (typeof bgImage.uri === 'number') {
-          const source = resolveAssetSource(bgImage.uri);
-          if (source != null && source.uri != null) {
-            uri = source.uri;
-            // The asset registry records these already divided by the asset's
-            // scale, so they are layout units and need no density maths native
-            // side. Matches how `Image` derives its default dimensions.
-            if (typeof source.width === 'number') {
-              intrinsicWidth = source.width;
-            }
-            if (typeof source.height === 'number') {
-              intrinsicHeight = source.height;
-            }
-          }
-        }
-        if (uri != null) {
-          // The registry reports both dimensions or neither.
-          result = result.concat(
-            intrinsicWidth != null && intrinsicHeight != null
-              ? {type: 'url', uri, intrinsicWidth, intrinsicHeight}
-              : {type: 'url', uri},
-          );
-          continue;
-        } else {
+        const urlBackgroundImage = processURLBackgroundImage(bgImage.uri);
+        if (urlBackgroundImage == null) {
           // If the URI is invalid, return an empty array. Same as web.
           return [];
         }
+        result = result.concat(urlBackgroundImage);
+        continue;
       }
 
       const processedColorStops = processColorStops(bgImage);
