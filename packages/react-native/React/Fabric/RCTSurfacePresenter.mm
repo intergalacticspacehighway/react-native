@@ -100,7 +100,8 @@ class ReactRevisionMergeRunLoopObserverDelegate final : public RunLoopObserver::
 
     // One `ImageManager` for `<Image>` and `url()` background images, because `RCTImageLoader` must not get
     // requests from more than one queue. Its constructor requires the image loader.
-    if (contextContainer->find<std::shared_ptr<void>>("RCTImageLoader").has_value()) {
+    if (!contextContainer->find<std::shared_ptr<ImageManager>>(ImageManagerKey).has_value() &&
+        contextContainer->find<std::shared_ptr<void>>("RCTImageLoader").has_value()) {
       contextContainer->insert(ImageManagerKey, std::make_shared<ImageManager>(contextContainer));
     }
 

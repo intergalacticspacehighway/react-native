@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#import <React/Graphics.h>
+#import <React/RendererCore.h>
 #import <UIKit/UIKit.h>
-#import <react/renderer/core/ReactPrimitives.h>
-#import <react/renderer/graphics/BackgroundImage.h>
 
 #include <memory>
 #include <string>
