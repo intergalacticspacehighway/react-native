@@ -46,13 +46,13 @@ internal class BackgroundImageDrawable(
   private var backgroundImageClipPath: Path? = null
   private var backgroundPositioningArea: RectF? = null
   private var backgroundPaintingArea: RectF? = null
-  private val urlImageLoader = BackgroundImageURLLoader(context)
+  private val backgroundImageURLLoader = BackgroundImageURLLoader(context) { invalidateSelf() }
 
   var backgroundImageLayers: List<BackgroundImageLayer>? = null
     set(value) {
       if (field != value) {
         field = value
-        loadUrlImages(value)
+        updateBackgroundImageURLRequests()
         invalidateSelf()
       }
     }
@@ -92,6 +92,19 @@ internal class BackgroundImageDrawable(
   override fun onBoundsChange(bounds: Rect) {
     super.onBoundsChange(bounds)
     needUpdatePath = true
+  }
+
+  // The view calls this when it is detached from the window or hidden, and again when it is shown.
+  override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
+    val changed = super.setVisible(visible, restart)
+    if (changed) {
+      if (visible) {
+        updateBackgroundImageURLRequests()
+      } else {
+        backgroundImageURLLoader.cancelPendingRequests()
+      }
+    }
+    return changed
   }
 
   override fun setAlpha(alpha: Int) {
@@ -143,19 +156,19 @@ internal class BackgroundImageDrawable(
         val position =
             backgroundPosition?.takeIf { it.isNotEmpty() }?.let { it.getOrNull(index % it.size) }
 
-        val urlBitmap: Bitmap?
+        val urlImage: Bitmap?
         val (intrinsicWidth, intrinsicHeight) =
             when (backgroundImageLayer) {
               is BackgroundImageLayer.GradientLayer -> {
-                urlBitmap = null
+                urlImage = null
                 backgroundPositioningArea.width() to backgroundPositioningArea.height()
               }
               is BackgroundImageLayer.URLImageLayer -> {
-                val bitmap = urlImageLoader.loadedBitmapForUri(backgroundImageLayer.uri)
-                if (bitmap == null) {
+                val image = backgroundImageURLLoader.imageForUri(backgroundImageLayer.uri)
+                if (image == null) {
                   continue
                 }
-                urlBitmap = bitmap
+                urlImage = image
                 // Asset (local require() assets) pass intrinsicWidth/Height in DIPs
                 // So use those dimensions and convert from dp to physical pixels.
                 val assetWidth = backgroundImageLayer.intrinsicWidth
@@ -165,7 +178,7 @@ internal class BackgroundImageDrawable(
                 } else {
                   // Plain url() images don't pass intrinsic width/height
                   // so take the decoded pixels as DIPs and convert
-                  bitmap.width.toFloat().dpToPx() to bitmap.height.toFloat().dpToPx()
+                  image.width.toFloat().dpToPx() to image.height.toFloat().dpToPx()
                 }
               }
             }
@@ -177,6 +190,7 @@ internal class BackgroundImageDrawable(
                 backgroundPositioningArea.height(),
                 intrinsicWidth,
                 intrinsicHeight,
+                backgroundImageLayer is BackgroundImageLayer.URLImageLayer,
                 size,
                 repeat,
             )
@@ -289,10 +303,10 @@ internal class BackgroundImageDrawable(
           repeat(yTilesCount) {
             canvas.save()
             canvas.translate(translateX, translateY)
-            if (urlBitmap != null) {
-              val srcRect = Rect(0, 0, urlBitmap.width, urlBitmap.height)
+            if (urlImage != null) {
+              val srcRect = Rect(0, 0, urlImage.width, urlImage.height)
               val dstRect = RectF(0f, 0f, tileWidth, tileHeight)
-              canvas.drawBitmap(urlBitmap, srcRect, dstRect, backgroundPaint)
+              canvas.drawBitmap(urlImage, srcRect, dstRect, backgroundPaint)
             } else {
               canvas.drawRect(0f, 0f, tileWidth, tileHeight, backgroundPaint)
             }
@@ -390,16 +404,37 @@ internal class BackgroundImageDrawable(
       containerHeight: Float,
       imageWidth: Float,
       imageHeight: Float,
+      hasIntrinsicRatio: Boolean,
       backgroundSize: BackgroundSize?,
       repeat: BackgroundRepeat?,
   ): Pair<Float, Float> {
     var finalWidth = imageWidth
     var finalHeight = imageHeight
+    // An `auto` dimension keeps the image's aspect ratio. Without a ratio (gradients), it stays at
+    // its intrinsic size.
+    val keepsRatio = hasIntrinsicRatio && imageWidth > 0 && imageHeight > 0
+    val ratio = if (keepsRatio) imageWidth / imageHeight else 0f
+    var xAuto = true
+    var yAuto = true
 
     if (backgroundSize is BackgroundSize.LengthPercentageAuto) {
       val w = backgroundSize.lengthPercentage.x
       val h = backgroundSize.lengthPercentage.y
-      if (w != null && h != null) {
+      xAuto = backgroundSize.lengthPercentage.isXAuto()
+      yAuto = backgroundSize.lengthPercentage.isYAuto()
+      if (keepsRatio) {
+        if (w != null) {
+          finalWidth = positionToPixels(w, containerWidth)
+        }
+        if (h != null) {
+          finalHeight = positionToPixels(h, containerHeight)
+        }
+        if (!xAuto && yAuto) {
+          finalHeight = finalWidth / ratio
+        } else if (xAuto && !yAuto) {
+          finalWidth = finalHeight * ratio
+        }
+      } else if (w != null && h != null) {
         finalWidth = positionToPixels(w, containerWidth)
         finalHeight = positionToPixels(h, containerHeight)
       }
@@ -421,6 +456,15 @@ internal class BackgroundImageDrawable(
           finalHeight = containerHeight / numRepeats
         }
       }
+    }
+
+    // With `round` on one axis only, an `auto` other axis is scaled again to restore the ratio.
+    val roundX = repeat?.x == BackgroundRepeatKeyword.Round
+    val roundY = repeat?.y == BackgroundRepeatKeyword.Round
+    if (keepsRatio && roundX && !roundY && yAuto) {
+      finalHeight = finalWidth / ratio
+    } else if (keepsRatio && roundY && !roundX && xAuto) {
+      finalWidth = finalHeight * ratio
     }
 
     return finalWidth to finalHeight
@@ -455,13 +499,7 @@ internal class BackgroundImageDrawable(
     return translateX to translateY
   }
 
-  private fun loadUrlImages(layers: List<BackgroundImageLayer>?) {
-    val uris = layers?.filterIsInstance<BackgroundImageLayer.URLImageLayer>()?.map { it.uri }
-    if (uris.isNullOrEmpty()) {
-      urlImageLoader.cancelAllRequests()
-      return
-    }
-
-    urlImageLoader.loadImages(uris) { invalidateSelf() }
+  private fun updateBackgroundImageURLRequests() {
+    backgroundImageURLLoader.loadBackgroundImages(backgroundImageLayers.orEmpty())
   }
 }
