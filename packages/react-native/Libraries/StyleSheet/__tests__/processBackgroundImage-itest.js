@@ -1308,4 +1308,69 @@ describe('processBackgroundImage', () => {
     const result = processBackgroundImage('url("")');
     expect(result).toEqual([]);
   });
+
+  it('should return empty for an empty uri in the object syntax', () => {
+    const result = processBackgroundImage([{type: 'url', uri: ''}]);
+    expect(result).toEqual([]);
+  });
+
+  it('should keep parentheses inside a quoted url', () => {
+    // Parentheses are valid unencoded in urls, and CSS requires quotes for them.
+    const result = processBackgroundImage(
+      'url("https://upload.wikimedia.org/wikipedia/commons/6/69/Surface_of_Mercury_(14433689302).jpg"), linear-gradient(red, blue)',
+    );
+    expect(result).toEqual([
+      {
+        type: 'url',
+        uri: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Surface_of_Mercury_(14433689302).jpg',
+      },
+      {
+        type: 'linear-gradient',
+        direction: {type: 'angle', value: 180},
+        colorStops: [
+          {color: processColor('red'), position: null},
+          {color: processColor('blue'), position: null},
+        ],
+      },
+    ]);
+  });
+
+  it('should keep the comma in a quoted data uri', () => {
+    const result = processBackgroundImage(
+      'url("data:image/png;base64,iVBORw0KGgo="), url(https://example.com/a.png)',
+    );
+    expect(result).toEqual([
+      {type: 'url', uri: 'data:image/png;base64,iVBORw0KGgo='},
+      {type: 'url', uri: 'https://example.com/a.png'},
+    ]);
+  });
+
+  // https://www.w3.org/TR/css-syntax-3/#consume-url-token
+  for (const [name, backgroundImage] of [
+    ['whitespace inside an unquoted url', 'url(my photo.png)'],
+    [
+      'parentheses inside an unquoted url',
+      'url(https://upload.wikimedia.org/wikipedia/commons/6/69/Surface_of_Mercury_(14433689302).jpg)',
+    ],
+    ['a quote inside an unquoted url', 'url(a"b.png)'],
+    ['text after a quoted url', 'url("a.png" x)'],
+    ['mismatched quotes', 'url("a.png\')'],
+  ]) {
+    it(`should return empty for ${name}`, () => {
+      expect(processBackgroundImage(backgroundImage)).toEqual([]);
+    });
+  }
+
+  for (const [name, backgroundImage, uri] of [
+    ['an escaped parenthesis', 'url(a\\)b.png)', 'a)b.png'],
+    ['an escaped quote in a quoted url', 'url("a\\"b.png")', 'a"b.png'],
+    ['a hex escape', 'url(a\\20 b.png)', 'a b.png'],
+    ['a missing closing parenthesis', 'url(a.png', 'a.png'],
+  ]) {
+    it(`should parse a url with ${name}`, () => {
+      expect(processBackgroundImage(backgroundImage)).toEqual([
+        {type: 'url', uri},
+      ]);
+    });
+  }
 });

@@ -16,8 +16,6 @@
 
 namespace facebook::react {
 
-class ImageSource;
-
 struct URLBackgroundImage {
   std::string uri{};
   // Natural size in layout units, supplied by the asset registry. Zero when the

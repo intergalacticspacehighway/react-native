@@ -25,7 +25,7 @@ const processColor = require('./processColor').default;
 // Pre-compiled regex patterns for performance - avoids regex compilation on each call
 const NEWLINE_REGEX = /\n/g;
 const GRADIENT_REGEX = /^(linear|radial)-gradient\(((?:\([^)]*\)|[^()])*)\)/;
-const URL_REGEX = /^url\((.*)\)$/i;
+const URL_FUNCTION_REGEX = /^url\(/i;
 const COMMA_SPLIT_REGEX = /,(?![^(]*\))/;
 const WHITESPACE_SPLIT_REGEX = /\s+/;
 const COLOR_STOP_PARTS_REGEX = /\S+\([^)]*\)|\S+/g;
@@ -111,7 +111,7 @@ export function processBackgroundImageAssets(
 
 function processURLBackgroundImage(uri: number | string): ?URLBackgroundImage {
   if (typeof uri === 'string') {
-    return {type: 'url', uri};
+    return uri.length > 0 ? {type: 'url', uri} : null;
   }
   const source = resolveAssetSource(uri);
   if (source == null || source.uri == null) {
@@ -327,14 +327,9 @@ function parseBackgroundImageCSSString(
   const bgImageStrings = splitGradients(cssString);
 
   for (const bgImageString of bgImageStrings) {
-    const urlMatch = URL_REGEX.exec(bgImageString);
-    if (urlMatch) {
-      let uri = urlMatch[1].trim();
-      const first = uri[0];
-      if ((first === '"' || first === "'") && uri.endsWith(first)) {
-        uri = uri.slice(1, -1);
-      }
-      if (uri.length > 0) {
+    if (URL_FUNCTION_REGEX.test(bgImageString)) {
+      const uri = parseURLFunctionBody(bgImageString.slice('url('.length));
+      if (uri != null && uri.length > 0) {
         // A url() in a css string is not an asset, so its natural size is only
         // known once the image is decoded.
         backgroundImages.push({
@@ -360,6 +355,137 @@ function parseBackgroundImageCSSString(
     }
   }
   return backgroundImages;
+}
+
+const isCSSWhitespace = (char: string): boolean =>
+  char === ' ' ||
+  char === '\t' ||
+  char === '\n' ||
+  char === '\r' ||
+  char === '\f';
+
+const isCSSNewline = (char: string): boolean =>
+  char === '\n' || char === '\r' || char === '\f';
+
+// https://www.w3.org/TR/css-syntax-3/#non-printable-code-point
+const isCSSNonPrintable = (char: string): boolean => {
+  const code = char.charCodeAt(0);
+  return (
+    code <= 0x08 ||
+    code === 0x0b ||
+    (code >= 0x0e && code <= 0x1f) ||
+    code === 0x7f
+  );
+};
+
+// Parses the text after `url(`. Returns the url, or null for an invalid url.
+// The unquoted form follows https://www.w3.org/TR/css-syntax-3/#consume-url-token
+// and the quoted form is a string token followed by `)`.
+function parseURLFunctionBody(input: string): ?string {
+  let i = 0;
+  while (i < input.length && isCSSWhitespace(input[i])) {
+    i++;
+  }
+
+  const quote = input[i];
+  if (quote === '"' || quote === "'") {
+    let uri = '';
+    i++;
+    while (true) {
+      if (i >= input.length || isCSSNewline(input[i])) {
+        return null;
+      }
+      const char = input[i];
+      if (char === quote) {
+        i++;
+        break;
+      }
+      if (char === '\\') {
+        if (i + 1 < input.length && isCSSNewline(input[i + 1])) {
+          // An escaped newline is skipped.
+          i += 2;
+          continue;
+        }
+        if (i + 1 >= input.length) {
+          return null;
+        }
+        const [codePoint, length] = consumeCSSEscape(input, i + 1);
+        uri += codePoint;
+        i += 1 + length;
+        continue;
+      }
+      uri += char;
+      i++;
+    }
+    while (i < input.length && isCSSWhitespace(input[i])) {
+      i++;
+    }
+    return input[i] === ')' && i === input.length - 1 ? uri : null;
+  }
+
+  let uri = '';
+  while (i < input.length) {
+    const char = input[i];
+    if (char === ')') {
+      return i === input.length - 1 ? uri : null;
+    }
+    if (isCSSWhitespace(char)) {
+      while (i < input.length && isCSSWhitespace(input[i])) {
+        i++;
+      }
+      return i >= input.length || (input[i] === ')' && i === input.length - 1)
+        ? uri
+        : null;
+    }
+    if (
+      char === '"' ||
+      char === "'" ||
+      char === '(' ||
+      isCSSNonPrintable(char)
+    ) {
+      return null;
+    }
+    if (char === '\\') {
+      if (i + 1 >= input.length || isCSSNewline(input[i + 1])) {
+        return null;
+      }
+      const [codePoint, length] = consumeCSSEscape(input, i + 1);
+      uri += codePoint;
+      i += 1 + length;
+      continue;
+    }
+    uri += char;
+    i++;
+  }
+  // A missing `)` at the end is a parse error, but the url is kept.
+  return uri;
+}
+
+// https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
+// `start` is the index after the backslash. Returns the code point and the
+// number of characters it used.
+function consumeCSSEscape(input: string, start: number): [string, number] {
+  let i = start;
+  let hex = '';
+  while (i < input.length && hex.length < 6 && /[0-9a-fA-F]/.test(input[i])) {
+    hex += input[i];
+    i++;
+  }
+  if (hex.length === 0) {
+    return [input[start], 1];
+  }
+  if (i < input.length && isCSSWhitespace(input[i])) {
+    i++;
+  }
+  let codePoint = parseInt(hex, 16);
+  if (
+    codePoint === 0 ||
+    (codePoint >= 0xd800 && codePoint <= 0xdfff) ||
+    codePoint > 0x10ffff
+  ) {
+    codePoint = 0xfffd;
+  }
+  return [String.fromCodePoint(codePoint), i - start];
 }
 
 function parseRadialGradientCSSString(

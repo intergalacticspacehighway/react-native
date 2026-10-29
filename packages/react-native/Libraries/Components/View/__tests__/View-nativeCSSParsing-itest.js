@@ -72,6 +72,15 @@ describe('<View> native CSS parsing', () => {
       expect(backgroundImage).toContain('rgba(230, 100, 101, 1)');
     });
 
+    it('drops a url layer with an empty uri', () => {
+      expect(
+        mountedProp(
+          {backgroundImage: [{type: 'url', uri: ''}]},
+          'backgroundImage',
+        ),
+      ).toBeUndefined();
+    });
+
     it('resolves a require() asset in the object syntax', () => {
       expect(
         mountedProp(

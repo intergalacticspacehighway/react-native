@@ -25,6 +25,32 @@ namespace facebook::react {
 using RawValueMap = std::unordered_map<std::string, RawValue>;
 using RawValueList = std::vector<RawValue>;
 
+// Returns nothing for a missing, non-string, or empty uri.
+static std::optional<URLBackgroundImage> parseURLBackgroundImage(
+    const RawValueMap& rawBackgroundImageMap) {
+  auto uriIt = rawBackgroundImageMap.find("uri");
+  if (uriIt == rawBackgroundImageMap.end() ||
+      !uriIt->second.hasType<std::string>()) {
+    return std::nullopt;
+  }
+  URLBackgroundImage urlBackgroundImage;
+  urlBackgroundImage.uri = (std::string)(uriIt->second);
+  if (urlBackgroundImage.uri.empty()) {
+    return std::nullopt;
+  }
+  auto widthIt = rawBackgroundImageMap.find("intrinsicWidth");
+  if (widthIt != rawBackgroundImageMap.end() &&
+      widthIt->second.hasType<Float>()) {
+    urlBackgroundImage.intrinsicWidth = (Float)(widthIt->second);
+  }
+  auto heightIt = rawBackgroundImageMap.find("intrinsicHeight");
+  if (heightIt != rawBackgroundImageMap.end() &&
+      heightIt->second.hasType<Float>()) {
+    urlBackgroundImage.intrinsicHeight = (Float)(heightIt->second);
+  }
+  return urlBackgroundImage;
+}
+
 inline GradientKeyword parseGradientKeyword(const std::string& keyword) {
   if (keyword == "to top right") {
     return GradientKeyword::ToTopRight;
@@ -209,22 +235,9 @@ void parseProcessedBackgroundImage(
 
       backgroundImage.emplace_back(std::move(radialGradient));
     } else if (type == "url") {
-      auto uriIt = rawBackgroundImageMap.find("uri");
-      if (uriIt != rawBackgroundImageMap.end() &&
-          uriIt->second.hasType<std::string>()) {
-        URLBackgroundImage urlBackgroundImage;
-        urlBackgroundImage.uri = (std::string)(uriIt->second);
-        auto widthIt = rawBackgroundImageMap.find("intrinsicWidth");
-        if (widthIt != rawBackgroundImageMap.end() &&
-            widthIt->second.hasType<Float>()) {
-          urlBackgroundImage.intrinsicWidth = (Float)(widthIt->second);
-        }
-        auto heightIt = rawBackgroundImageMap.find("intrinsicHeight");
-        if (heightIt != rawBackgroundImageMap.end() &&
-            heightIt->second.hasType<Float>()) {
-          urlBackgroundImage.intrinsicHeight = (Float)(heightIt->second);
-        }
-        backgroundImage.emplace_back(std::move(urlBackgroundImage));
+      if (auto urlBackgroundImage =
+              parseURLBackgroundImage(rawBackgroundImageMap)) {
+        backgroundImage.emplace_back(std::move(*urlBackgroundImage));
       }
     }
   }
@@ -428,22 +441,9 @@ void parseUnprocessedBackgroundImageList(
 
       backgroundImage.emplace_back(std::move(radialGradient));
     } else if (type == "url") {
-      auto uriIt = rawBackgroundImageMap.find("uri");
-      if (uriIt != rawBackgroundImageMap.end() &&
-          uriIt->second.hasType<std::string>()) {
-        URLBackgroundImage urlBackgroundImage;
-        urlBackgroundImage.uri = (std::string)(uriIt->second);
-        auto widthIt = rawBackgroundImageMap.find("intrinsicWidth");
-        if (widthIt != rawBackgroundImageMap.end() &&
-            widthIt->second.hasType<Float>()) {
-          urlBackgroundImage.intrinsicWidth = (Float)(widthIt->second);
-        }
-        auto heightIt = rawBackgroundImageMap.find("intrinsicHeight");
-        if (heightIt != rawBackgroundImageMap.end() &&
-            heightIt->second.hasType<Float>()) {
-          urlBackgroundImage.intrinsicHeight = (Float)(heightIt->second);
-        }
-        backgroundImage.emplace_back(std::move(urlBackgroundImage));
+      if (auto urlBackgroundImage =
+              parseURLBackgroundImage(rawBackgroundImageMap)) {
+        backgroundImage.emplace_back(std::move(*urlBackgroundImage));
       }
     }
   }
