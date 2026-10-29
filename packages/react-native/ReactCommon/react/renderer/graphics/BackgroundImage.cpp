@@ -14,6 +14,12 @@ folly::dynamic URLBackgroundImage::toDynamic() const {
   folly::dynamic result = folly::dynamic::object();
   result["type"] = "url";
   result["uri"] = uri;
+  if (intrinsicWidth > 0) {
+    result["intrinsicWidth"] = intrinsicWidth;
+  }
+  if (intrinsicHeight > 0) {
+    result["intrinsicHeight"] = intrinsicHeight;
+  }
   return result;
 }
 
