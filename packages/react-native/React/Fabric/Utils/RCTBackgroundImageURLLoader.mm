@@ -151,8 +151,6 @@ using namespace facebook::react;
     return;
   }
 
-  // Keep the entries for uris that are still used, so their images do not
-  // disappear while the new ones load.
   NSMutableArray<RCTBackgroundImageURLEntry *> *entries = [NSMutableArray arrayWithCapacity:uris.size()];
   NSMutableArray<RCTBackgroundImageURLEntry *> *newEntries = [NSMutableArray new];
   for (const auto &uri : uris) {
@@ -170,8 +168,6 @@ using namespace facebook::react;
     }
   }
 
-  // Start only after `_entries` is updated, because a cached response can
-  // arrive synchronously and call `onLoad`.
   _entries = entries;
   for (RCTBackgroundImageURLEntry *entry in newEntries) {
     [entry startWithImageManager:*_imageManager surfaceId:surfaceId];
