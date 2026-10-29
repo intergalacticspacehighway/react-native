@@ -10,7 +10,6 @@ package com.facebook.react.uimanager.drawable
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import com.facebook.common.executors.CallerThreadExecutor
 import com.facebook.common.logging.FLog
 import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.BaseDataSubscriber
@@ -60,14 +59,9 @@ internal class BackgroundImageURLLoader(
     newEntries.forEach { it.start() }
   }
 
-  /**
-   * Cancels the requests that are still loading. Loaded images stay. The next
-   * [loadBackgroundImages] call requests the cancelled uris again.
-   */
-  fun cancelPendingRequests() {
-    val (loaded, pending) = entries.partition { it.image != null }
-    pending.forEach { it.cancel() }
-    entries = loaded
+  fun cancelRequests() {
+    entries.forEach { it.cancel() }
+    entries = emptyList()
   }
 
   /** Returns null until the image for [uri] has loaded. */
@@ -128,7 +122,8 @@ internal class BackgroundImageURLLoader(
               )
             }
           },
-          CallerThreadExecutor.getInstance(),
+          // Copying the bitmap is slow, and a cached image calls back at once.
+          Fresco.getImagePipeline().config.executorSupplier.forBackgroundTasks(),
       )
     }
 

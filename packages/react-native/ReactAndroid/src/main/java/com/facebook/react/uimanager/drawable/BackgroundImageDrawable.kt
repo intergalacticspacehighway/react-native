@@ -47,17 +47,12 @@ internal class BackgroundImageDrawable(
   private var backgroundPositioningArea: RectF? = null
   private var backgroundPaintingArea: RectF? = null
   private val backgroundImageURLLoader = BackgroundImageURLLoader(context) { invalidateSelf() }
-  private var needsBackgroundImageURLRequests = false
 
   var backgroundImageLayers: List<BackgroundImageLayer>? = null
     set(value) {
       if (field != value) {
         field = value
-        if (isVisible) {
-          updateBackgroundImageURLRequests()
-        } else {
-          needsBackgroundImageURLRequests = true
-        }
+        backgroundImageURLLoader.loadBackgroundImages(value.orEmpty())
         invalidateSelf()
       }
     }
@@ -89,6 +84,11 @@ internal class BackgroundImageDrawable(
   private val backgroundPaint: Paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { style = Paint.Style.FILL }
 
+  /** Called when the view is dropped. */
+  fun cancelBackgroundImageURLRequests() {
+    backgroundImageURLLoader.cancelRequests()
+  }
+
   override fun invalidateSelf() {
     needUpdatePath = true
     super.invalidateSelf()
@@ -97,20 +97,6 @@ internal class BackgroundImageDrawable(
   override fun onBoundsChange(bounds: Rect) {
     super.onBoundsChange(bounds)
     needUpdatePath = true
-  }
-
-  // The view calls this when it is detached from the window or hidden, and again when it is shown.
-  override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
-    val changed = super.setVisible(visible, restart)
-    if (changed) {
-      if (visible) {
-        updateBackgroundImageURLRequests()
-      } else {
-        backgroundImageURLLoader.cancelPendingRequests()
-        needsBackgroundImageURLRequests = true
-      }
-    }
-    return changed
   }
 
   override fun setAlpha(alpha: Int) {
@@ -133,10 +119,6 @@ internal class BackgroundImageDrawable(
   }
 
   override fun draw(canvas: Canvas) {
-    if (needsBackgroundImageURLRequests) {
-      updateBackgroundImageURLRequests()
-    }
-
     if (backgroundImageLayers.isNullOrEmpty()) {
       return
     }
@@ -450,19 +432,17 @@ internal class BackgroundImageDrawable(
 
     if (repeat?.x == BackgroundRepeatKeyword.Round && finalWidth > 0) {
       if (!FloatUtil.floatsEqual(containerWidth.rem(finalWidth), 0f)) {
-        val numRepeats = round(containerWidth / finalWidth)
-        if (numRepeats > 0) {
-          finalWidth = containerWidth / numRepeats
-        }
+        // CSS rounds to the nearest whole number of tiles, but at least one.
+        val numRepeats = maxOf(1f, round(containerWidth / finalWidth))
+        finalWidth = containerWidth / numRepeats
       }
     }
 
     if (repeat?.y == BackgroundRepeatKeyword.Round && finalHeight > 0) {
       if (!FloatUtil.floatsEqual(containerHeight.rem(finalHeight), 0f)) {
-        val numRepeats = round(containerHeight / finalHeight)
-        if (numRepeats > 0) {
-          finalHeight = containerHeight / numRepeats
-        }
+        // CSS rounds to the nearest whole number of tiles, but at least one.
+        val numRepeats = maxOf(1f, round(containerHeight / finalHeight))
+        finalHeight = containerHeight / numRepeats
       }
     }
 
@@ -505,10 +485,5 @@ internal class BackgroundImageDrawable(
         } + backgroundPositioningArea.top
 
     return translateX to translateY
-  }
-
-  private fun updateBackgroundImageURLRequests() {
-    needsBackgroundImageURLRequests = false
-    backgroundImageURLLoader.loadBackgroundImages(backgroundImageLayers.orEmpty())
   }
 }
