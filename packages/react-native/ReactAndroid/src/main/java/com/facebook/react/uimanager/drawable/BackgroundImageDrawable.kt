@@ -8,7 +8,6 @@
 package com.facebook.react.uimanager.drawable
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.Paint
@@ -149,7 +148,7 @@ internal class BackgroundImageDrawable(
             backgroundPosition?.takeIf { it.isNotEmpty() }?.let { it.getOrNull(index % it.size) }
 
         val uri = backgroundImageLayer.uri
-        val urlImage: Bitmap?
+        val urlImage: BackgroundImageURLLoader.OrientedBitmap?
         val (intrinsicWidth, intrinsicHeight) =
             if (uri == null) {
               urlImage = null
@@ -169,7 +168,7 @@ internal class BackgroundImageDrawable(
               } else {
                 // Plain url() images don't pass intrinsic width/height
                 // so take the decoded pixels as DIPs and convert
-                image.width.toFloat().dpToPx() to image.height.toFloat().dpToPx()
+                image.width.dpToPx() to image.height.dpToPx()
               }
             }
 
@@ -286,8 +285,7 @@ internal class BackgroundImageDrawable(
         }
 
         // 5. draw the repeating tiles using translate
-        val srcRect = urlImage?.let { Rect(0, 0, it.width, it.height) }
-        val dstRect = RectF(0f, 0f, tileWidth, tileHeight)
+        val urlImageMatrix = urlImage?.drawMatrix(tileWidth, tileHeight)
         var translateX = initialX
         var translateY: Float
         repeat(xTilesCount) {
@@ -295,8 +293,8 @@ internal class BackgroundImageDrawable(
           repeat(yTilesCount) {
             canvas.save()
             canvas.translate(translateX, translateY)
-            if (urlImage != null) {
-              canvas.drawBitmap(urlImage, srcRect, dstRect, backgroundPaint)
+            if (urlImage != null && urlImageMatrix != null) {
+              canvas.drawBitmap(urlImage.bitmap, urlImageMatrix, backgroundPaint)
             } else {
               canvas.drawRect(0f, 0f, tileWidth, tileHeight, backgroundPaint)
             }

@@ -10,16 +10,18 @@ package com.facebook.react.uimanager.drawable
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.graphics.RectF
+import com.facebook.common.executors.UiThreadImmediateExecutorService
 import com.facebook.common.logging.FLog
 import com.facebook.common.references.CloseableReference
 import com.facebook.datasource.BaseDataSubscriber
 import com.facebook.datasource.DataSource
 import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.drawee.components.DeferredReleaser
 import com.facebook.imagepipeline.common.ImageDecodeOptions
 import com.facebook.imagepipeline.image.CloseableImage
 import com.facebook.imagepipeline.image.CloseableStaticBitmap
 import com.facebook.imagepipeline.request.ImageRequestBuilder
-import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.uimanager.style.BackgroundImageLayer
 import com.facebook.react.views.imagehelper.ImageSource
@@ -65,13 +67,57 @@ internal class BackgroundImageURLLoader(
   }
 
   /** Returns null until the image for [uri] has loaded. */
-  fun imageForUri(uri: String): Bitmap? = entries.find { it.uri == uri }?.image
+  fun imageForUri(uri: String): OrientedBitmap? = entries.find { it.uri == uri }?.image
+
+  /**
+   * A decoded image from the pipeline's cache. Fresco's drawee also draws the shared bitmap and
+   * applies the EXIF orientation when it draws, in the same way as [drawMatrix].
+   */
+  class OrientedBitmap(val bitmap: Bitmap, exifOrientation: Int, rotationAngle: Int) {
+    private val orientation =
+        Matrix().apply {
+          when (exifOrientation) {
+            2 -> setScale(-1f, 1f)
+            4 -> setScale(1f, -1f)
+            5 -> {
+              setRotate(270f)
+              postScale(1f, -1f)
+            }
+            7 -> {
+              setRotate(270f)
+              postScale(-1f, 1f)
+            }
+            else -> if (rotationAngle > 0) setRotate(rotationAngle.toFloat())
+          }
+        }
+    private val orientedBounds =
+        RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()).also {
+          orientation.mapRect(it)
+        }
+
+    /** Width in pixels, after the EXIF orientation. */
+    val width: Float
+      get() = orientedBounds.width()
+
+    /** Height in pixels, after the EXIF orientation. */
+    val height: Float
+      get() = orientedBounds.height()
+
+    /** Returns a matrix that draws [bitmap] upright and scaled to [width] x [height]. */
+    fun drawMatrix(width: Float, height: Float): Matrix =
+        Matrix(orientation).apply {
+          postTranslate(-orientedBounds.left, -orientedBounds.top)
+          postScale(width / orientedBounds.width(), height / orientedBounds.height())
+        }
+  }
 
   private inner class Entry(val uri: String) {
-    var image: Bitmap? = null
+    var image: OrientedBitmap? = null
       private set
 
     private var dataSource: DataSource<CloseableReference<CloseableImage>>? = null
+    // Keeps the bitmap in the pipeline's cache while this entry draws it.
+    private var imageReference: CloseableReference<CloseableImage>? = null
     private var cancelled = false
 
     fun start() {
@@ -93,24 +139,19 @@ internal class BackgroundImageURLLoader(
                 return
               }
               val imageReference = dataSource.result ?: return
-              // The pipeline reuses the decoded bitmap after the reference is closed, so keep a
-              // copy.
-              val uprightImage =
-                  try {
-                    (imageReference.get() as? CloseableStaticBitmap)?.let { uprightImage(it) }
-                  } finally {
-                    CloseableReference.closeSafely(imageReference)
-                  }
-              if (uprightImage == null) {
-                FLog.w(ReactConstants.TAG, "Could not copy bitmap for background image: %s", uri)
+              // This is the final image. Closing the data source makes any later callback get
+              // no result, so only this reference is kept.
+              dataSource.close()
+              val staticBitmap = imageReference.get() as? CloseableStaticBitmap
+              val bitmap = staticBitmap?.underlyingBitmap
+              if (cancelled || staticBitmap == null || bitmap == null) {
+                CloseableReference.closeSafely(imageReference)
                 return
               }
-              UiThreadUtil.runOnUiThread {
-                if (!cancelled) {
-                  image = uprightImage
-                  onLoad()
-                }
-              }
+              this@Entry.imageReference = imageReference
+              image =
+                  OrientedBitmap(bitmap, staticBitmap.exifOrientation, staticBitmap.rotationAngle)
+              onLoad()
             }
 
             override fun onFailureImpl(dataSource: DataSource<CloseableReference<CloseableImage>>) {
@@ -122,44 +163,22 @@ internal class BackgroundImageURLLoader(
               )
             }
           },
-          // Copying the bitmap is slow, and a cached image calls back at once.
-          Fresco.getImagePipeline().config.executorSupplier.forBackgroundTasks(),
+          // Like Fresco's drawee. A cached image calls back at once.
+          UiThreadImmediateExecutorService.getInstance(),
       )
     }
 
     fun cancel() {
       cancelled = true
       dataSource?.close()
-    }
-  }
-
-  private companion object {
-    /**
-     * Copies the decoded bitmap with its EXIF orientation applied. The pipeline only reports the
-     * orientation, and Fresco's drawee applies it when it draws, in the same way as below.
-     */
-    fun uprightImage(image: CloseableStaticBitmap): Bitmap? {
-      val source = image.underlyingBitmap ?: return null
-      val exifOrientation = image.exifOrientation
-      val rotationAngle = image.rotationAngle
-      if (rotationAngle <= 0 && exifOrientation <= 1) {
-        return source.copy(source.config ?: Bitmap.Config.ARGB_8888, false)
+      image = null
+      val imageReference = imageReference ?: return
+      this.imageReference = null
+      // The last frame drawn can still use the bitmap, so release it after that frame, like
+      // Fresco's drawee.
+      DeferredReleaser.getInstance().scheduleDeferredRelease {
+        CloseableReference.closeSafely(imageReference)
       }
-      val matrix = Matrix()
-      when (exifOrientation) {
-        2 -> matrix.setScale(-1f, 1f)
-        4 -> matrix.setScale(1f, -1f)
-        5 -> {
-          matrix.setRotate(270f)
-          matrix.postScale(1f, -1f)
-        }
-        7 -> {
-          matrix.setRotate(270f)
-          matrix.postScale(-1f, 1f)
-        }
-        else -> matrix.setRotate(rotationAngle.toFloat())
-      }
-      return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
   }
 }
