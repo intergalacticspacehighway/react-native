@@ -8,7 +8,6 @@
 package com.facebook.react.uimanager.style
 
 import android.graphics.Color
-import androidx.core.graphics.ColorUtils
 import com.facebook.react.uimanager.FloatUtil
 import com.facebook.react.uimanager.LengthPercentage
 import com.facebook.react.uimanager.LengthPercentageType
@@ -311,7 +310,7 @@ internal object ColorStopUtils {
 
         // Interpolate color using the calculated weighting
         leftColor?.let { left ->
-          rightColor?.let { right -> newStop.color = ColorUtils.blendARGB(left, right, weighting) }
+          rightColor?.let { right -> newStop.color = interpolateColor(left, right, weighting) }
         }
       }
 

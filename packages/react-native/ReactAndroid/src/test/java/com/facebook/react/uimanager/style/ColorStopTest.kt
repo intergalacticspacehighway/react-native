@@ -380,11 +380,31 @@ class ColorStopTest {
         )
     val clipped = ColorStopUtils.clipColorStops(fixed)
 
-    assertThat(clipped.first().color).isEqualTo(Color.rgb(127, 0, 127))
+    assertThat(clipped.first().color).isEqualTo(Color.rgb(128, 0, 128))
     assertThat(clipped.first().position).isEqualTo(0f)
     assertThat(clipped.map { it.position }).allMatch { it != null && it >= 0f }
     assertThat(clipped.last().color).isEqualTo(Color.BLUE)
     assertThat(clipped.last().position).isEqualTo(0.65f)
+  }
+
+  @Test
+  fun testTransitionHintsInterpolateWithPremultipliedAlpha() {
+    val processed =
+        ColorStopUtils.getFixedColorStops(
+            listOf(
+                ColorStop(Color.RED, LengthPercentage(0f, LengthPercentageType.PERCENT)),
+                ColorStop(null, LengthPercentage(25f, LengthPercentageType.PERCENT)),
+                ColorStop(Color.TRANSPARENT, LengthPercentage(100f, LengthPercentageType.PERCENT)),
+            ),
+            100f,
+        )
+
+    assertThat(processed).hasSize(11)
+    for (stop in processed.dropLast(1)) {
+      val color = checkNotNull(stop.color)
+      assertThat(Color.rgb(Color.red(color), Color.green(color), Color.blue(color)))
+          .isEqualTo(Color.RED)
+    }
   }
 
   // From WPT: linear-gradient(green -50%, blue -50%) and radial-gradient(green -50%, blue -50%).

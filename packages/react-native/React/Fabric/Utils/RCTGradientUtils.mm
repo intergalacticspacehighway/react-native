@@ -6,7 +6,6 @@
  */
 
 #import "RCTGradientUtils.h"
-#import <React/RCTAnimationUtils.h>
 #import <React/RCTConversions.h>
 #import <react/utils/FloatComparison.h>
 #include <algorithm>
@@ -262,11 +261,6 @@ static std::vector<ProcessedColorStop> processColorTransitionHints(const std::ve
     // pointRelativeOffset^(ln(0.5)/ln(hintRelativeOffset)).
     auto hintRelativeOffset = leftDist / totalDist;
     const auto logRatio = log(0.5) / log(hintRelativeOffset);
-    auto leftColor = RCTUIColorFromSharedColor(leftSharedColor);
-    auto rightColor = RCTUIColorFromSharedColor(rightSharedColor);
-    NSArray<NSNumber *> *inputRange = @[ @0.0, @1.0 ];
-    NSArray<UIColor *> *outputRange = @[ leftColor, rightColor ];
-
     for (auto &newStop : newStops) {
       auto pointRelativeOffset = (newStop.position.value() - offsetLeft) / totalDist;
       auto weighting = pow(pointRelativeOffset, logRatio);
@@ -275,14 +269,7 @@ static std::vector<ProcessedColorStop> processColorTransitionHints(const std::ve
         continue;
       }
 
-      auto interpolatedColor = RCTInterpolateColorInRange(weighting, inputRange, outputRange);
-
-      auto alpha = (interpolatedColor >> 24) & 0xFF;
-      auto red = (interpolatedColor >> 16) & 0xFF;
-      auto green = (interpolatedColor >> 8) & 0xFF;
-      auto blue = interpolatedColor & 0xFF;
-
-      newStop.color = colorFromRGBA(red, green, blue, alpha);
+      newStop.color = interpolateColor(leftSharedColor, rightSharedColor, static_cast<float>(weighting));
     }
 
     // Replace the color hint with new color stops

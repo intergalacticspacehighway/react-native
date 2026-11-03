@@ -200,12 +200,29 @@ static NSString *describeStops(const std::vector<ProcessedColorStop> &colorStops
                                  gradientLineLength:100];
   auto clipped = [self clip:fixed];
 
-  // The hint is an even mix, 127.5, which RCTInterpolateColorInRange rounds up.
   RCTAssertColorStop(clipped.front(), rgba(128, 0, 128), 0);
   for (const auto &colorStop : clipped) {
     XCTAssertGreaterThanOrEqual(colorStop.position.value_or(-1), 0, @"%@", describeStops(clipped));
   }
   RCTAssertColorStop(clipped.back(), _blue, 0.65);
+}
+
+- (void)testTransitionHintsInterpolateWithPremultipliedAlpha
+{
+  auto processed = [RCTGradientUtils getFixedColorStops:{{_red, ValueUnit(0, UnitType::Percent)},
+                                                         {SharedColor(), ValueUnit(25, UnitType::Percent)},
+                                                         {_transparent, ValueUnit(100, UnitType::Percent)}}
+                                     gradientLineLength:100];
+
+  XCTAssertEqual(processed.size(), 11, @"%@", describeStops(processed));
+  for (size_t i = 0; i + 1 < processed.size(); i++) {
+    const auto &color = processed[i].color;
+    XCTAssertEqualObjects(
+        describeColor(rgba(redFromColor(color), greenFromColor(color), blueFromColor(color))),
+        describeColor(_red),
+        @"%@",
+        describeStops(processed));
+  }
 }
 
 // From WPT: linear-gradient(green -50%, blue -50%) and radial-gradient(green -50%, blue -50%).
