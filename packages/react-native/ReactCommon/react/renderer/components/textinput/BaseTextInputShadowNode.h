@@ -11,6 +11,8 @@
 
 #include <glog/logging.h>
 
+#include <cmath>
+
 #include <React/RendererCore.h>
 #include <React/Utils.h>
 #include <React/View.h>
@@ -198,10 +200,14 @@ class BaseTextInputShadowNode
    */
   AttributedStringBox attributedStringBoxToMeasure(const LayoutContext &layoutContext) const
   {
-    bool meaningfulState = BaseShadowNode::getState() &&
-        BaseShadowNode::getState()->getRevision() != State::initialRevisionValue &&
-        BaseShadowNode::getStateData().reactTreeAttributedString.getBaseTextAttributes().fontSizeMultiplier ==
-            layoutContext.fontSizeMultiplier;
+    bool meaningfulState = false;
+    if (BaseShadowNode::getState() && BaseShadowNode::getState()->getRevision() != State::initialRevisionValue) {
+      // NaN means only the native view has written this state.
+      const auto stateFontSizeMultiplier =
+          BaseShadowNode::getStateData().reactTreeAttributedString.getBaseTextAttributes().fontSizeMultiplier;
+      meaningfulState =
+          std::isnan(stateFontSizeMultiplier) || stateFontSizeMultiplier == layoutContext.fontSizeMultiplier;
+    }
     if (meaningfulState) {
       const auto &stateData = BaseShadowNode::getStateData();
       auto attributedStringBox = stateData.attributedStringBox;

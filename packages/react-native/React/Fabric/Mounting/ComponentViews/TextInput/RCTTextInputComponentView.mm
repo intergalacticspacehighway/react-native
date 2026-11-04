@@ -85,6 +85,7 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
    */
   BOOL _comingFromJS;
   BOOL _didMoveToWindow;
+  BOOL _needsStateUpdateForTextAttributes;
 
   /*
    * Newly initialized default typing attributes contain a no-op NSParagraphStyle and NSShadow. These cause inequality
@@ -159,6 +160,7 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
     const auto &newTextInputProps = static_cast<const TextInputProps &>(*_props);
     _backedTextInputView.defaultTextAttributes =
         RCTNSTextAttributesFromTextAttributes(newTextInputProps.getEffectiveTextAttributes(RCTFontSizeMultiplier()));
+    [self _updateStateForTextAttributes];
   }
 }
 
@@ -321,6 +323,8 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
     defaultAttributes[RCTAttributedStringEventEmitterKey] =
         _backedTextInputView.defaultTextAttributes[RCTAttributedStringEventEmitterKey];
     _backedTextInputView.defaultTextAttributes = defaultAttributes;
+    // `_state` is still the old state here, so update it in `finalizeUpdates:`.
+    _needsStateUpdateForTextAttributes = _state != nullptr;
   }
 
   if (newTextInputProps.selectionColor != oldTextInputProps.selectionColor) {
@@ -415,7 +419,18 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
   _backedTextInputView.inputAccessoryViewID = nil;
   _backedTextInputView.inputAccessoryView = nil;
   _hasInputAccessoryView = false;
+  _needsStateUpdateForTextAttributes = NO;
   [_backedTextInputView resignFirstResponder];
+}
+
+- (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask
+{
+  [super finalizeUpdates:updateMask];
+
+  if (_needsStateUpdateForTextAttributes) {
+    _needsStateUpdateForTextAttributes = NO;
+    [self _updateStateForTextAttributes];
+  }
 }
 
 #pragma mark - RCTBackedTextInputDelegate
@@ -815,6 +830,15 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
   _mostRecentEventCount += _comingFromJS ? 0 : 1;
   data.mostRecentEventCount = _mostRecentEventCount;
   _state->updateState(std::move(data));
+}
+
+// New text attributes can restyle the text on screen, so the measured copy in
+// the state must be updated. This is not a user edit, so it is not an event.
+- (void)_updateStateForTextAttributes
+{
+  _comingFromJS = YES;
+  [self _updateState];
+  _comingFromJS = NO;
 }
 
 - (AttributedString::Range)_selectionRange
